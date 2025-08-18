@@ -3,6 +3,7 @@ import Header from "./components/Header";
 import Home from "./pages/Home";
 import Products from "./pages/Products";
 import ProductDetail from './pages/ProductDetail';
+import Carrito from './pages/Carrito';
 
 function App() {
   return (
@@ -13,6 +14,7 @@ function App() {
           <Route path="/" element={<Home />} />
           <Route path="/productos" element={<Products />} />
           <Route path="/products/:id" element={<ProductDetail />} />
+          <Route path="/carrito" element={<Carrito />} />
         </Routes>
       </main>
     </Router>

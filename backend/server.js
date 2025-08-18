@@ -68,9 +68,6 @@ const productos = [
     precioOriginal: 40000,
     images: [
       "https://encrypted-tbn2.gstatic.com/shopping?q=tbn:ANd9GcQ8-Z9FOr5s3y_OijQkth3Xyub9BRjgFGsoyh4wc8fo8p4ixTJOqSSHCgV9bQntAywrMJ749m6VXMRyu3yK3E5ImNFzw1mD2jXBKiV9aTn48DKwZ8lc41RHqw",
-      "https://images.unsplash.com/photo-1589923188720-4a3b5cc6d822?w=800&h=600&fit=crop",
-      "https://images.unsplash.com/photo-1589923188715-0e12e0d8d54f?w=800&h=600&fit=crop",
-      "https://images.unsplash.com/photo-1589923188794-ecbfc3ef6f75?w=800&h=600&fit=crop"
     ],
     category: "Fertilizantes",
     descripcion: "Fertilizante orgánico de liberación controlada, ideal para mejorar la calidad del suelo y estimular el crecimiento saludable de cultivos.",
@@ -108,6 +105,39 @@ const productos = [
   }
 ];
 
+// Simulación de reseñas
+const reviews = {
+  1: [
+    {
+      id: 1,
+      usuario: "Carlos Rodríguez",
+      rating: 5,
+      fecha: "2024-01-15",
+      comentario: "Excelentes semillas, muy buena germinación. Las plantas crecieron fuertes y sanas.",
+      verificado: true
+    },
+    {
+      id: 2,
+      usuario: "María González",
+      rating: 4,
+      fecha: "2024-01-10",
+      comentario: "Buen producto, aunque un poco caro. La calidad lo vale.",
+      verificado: true
+    }
+  ],
+  2: [
+    {
+      id: 1,
+      usuario: "Pedro López",
+      rating: 5,
+      fecha: "2024-02-01",
+      comentario: "Fertilizante excelente, vi resultados en 2 semanas.",
+      verificado: true
+    }
+  ]
+};
+
+
 
 // RUTAS DE LA API
 
@@ -133,7 +163,6 @@ app.get('/api/products', (req, res) => {
   }
 });
 
-//Mostrar Producto completo
 // Ruta para obtener un producto específico por ID
 app.get('/api/products/:id', (req, res) => {
   try {
@@ -152,6 +181,19 @@ app.get('/api/products/:id', (req, res) => {
     res.status(500).json({ 
       error: error.message,
       message: 'Error al obtener el producto'
+    });
+  }
+});
+
+// Ruta para obtener las reseñas de un producto
+app.get('/api/products/:id/reviews', (req, res) => {
+  try {
+    const productId = parseInt(req.params.id);
+    res.json(reviews[productId] || []);
+  } catch (error) {
+    res.status(500).json({ 
+      error: error.message,
+      message: 'Error al obtener las reseñas'
     });
   }
 });

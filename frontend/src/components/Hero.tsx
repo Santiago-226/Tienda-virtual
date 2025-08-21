@@ -1,5 +1,6 @@
 import React from "react";
 import heroImage from "../assets/images/heroImage.jpeg";
+import {Link} from 'react-router-dom'
 
 const Hero = () => {
   return (
@@ -50,10 +51,12 @@ const Hero = () => {
 
             {/* Botones de acción */}
             <div className="flex flex-col sm:flex-row gap-4">
-              <button className="bg-yellow-400 text-green-900 px-8 py-3 rounded-lg font-bold hover:bg-yellow-300 transition-all duration-200 shadow-lg hover:shadow-xl">
+              <Link to={'/productos'}>
+              <button className="cursor-pointer bg-yellow-400 text-green-900 px-8 py-3 rounded-lg font-bold hover:bg-yellow-300 transition-all duration-200 shadow-lg hover:shadow-xl">
                 Ver Catálogo
               </button>
-              <button className="border-2 border-green-200 text-green-100 px-8 py-3 rounded-lg font-bold hover:bg-green-200 hover:text-green-900 transition-all duration-200">
+              </Link>
+              <button className="cursor-pointer border-2 border-green-200 text-green-100 px-8 py-3 rounded-lg font-bold hover:bg-green-200 hover:text-green-900 transition-all duration-200">
                 Asesoría Gratuita
               </button>
             </div>

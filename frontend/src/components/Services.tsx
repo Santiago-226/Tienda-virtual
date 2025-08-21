@@ -91,12 +91,9 @@ const Services = () => {
               para tu proyecto agrícola.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <button className="bg-gradient-to-r from-green-600 to-green-700 text-white px-8 py-4 rounded-lg font-bold hover:from-green-700 hover:to-green-800 transition-all duration-200 shadow-lg hover:shadow-xl flex items-center justify-center space-x-2">
+              <button className="cursor-pointer bg-gradient-to-r from-green-600 to-green-700 text-white px-8 py-4 rounded-lg font-bold hover:from-green-700 hover:to-green-800 transition-all duration-200 shadow-lg hover:shadow-xl flex items-center justify-center space-x-2">
                 <Phone className="h-5 w-5" />
                 <span>Contactar Ahora</span>
-              </button>
-              <button className="border-2 border-green-600 text-green-600 px-8 py-4 rounded-lg font-bold hover:bg-green-600 hover:text-white transition-all duration-200">
-                Ver Catálogo Completo
               </button>
             </div>
           </div>

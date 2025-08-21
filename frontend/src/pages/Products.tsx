@@ -80,7 +80,8 @@ const Products = () => {
   };
 
   const ProductCard = ({ product }: { product: Product }) => (
-    <div className="bg-white rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 group overflow-hidden border border-gray-100">
+    <Link to={`/products/${product.id}`}>
+      <div className="bg-white rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 group overflow-hidden border border-gray-100">
       <div className="relative overflow-hidden">
         <img
           src={product.images[0]}
@@ -110,11 +111,11 @@ const Products = () => {
       </div>
 
       <div className="p-6">
-        <Link to={`/products/${product.id}`}>
+        
           <h3 className="text-lg font-bold text-gray-800 mb-2 group-hover:text-green-600 transition-colors line-clamp-1">
             {product.nombre}
           </h3>
-        </Link>
+        
 
         <div className="flex items-center mb-3">
           <div className="flex text-yellow-400 text-sm">
@@ -145,6 +146,7 @@ const Products = () => {
         </div>
       </div>
     </div>
+    </Link>
   );
 
   const ProductListItem = ({ product }: { product: Product }) => (

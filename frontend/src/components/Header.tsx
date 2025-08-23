@@ -27,7 +27,6 @@ const Header = () => {
     { id: "/productos", label: "Productos" },
     { id: "/servicios", label: "Servicios" },
     { id: "/nosotros", label: "Nosotros" },
-    { id: "/contacto", label: "Contacto" },
   ];
 
   // Función para actualizar el contador del carrito

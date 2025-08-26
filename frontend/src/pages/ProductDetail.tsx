@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import API_URL from "../config/api.config";
 import {
   ArrowLeft,
   Star,
@@ -81,8 +82,8 @@ const ProductDetail = () => {
     setLoading(true);
     try {
       const [productResponse, reviewsResponse] = await Promise.all([
-        fetch(`http://localhost:5000/api/products/${productId}`), // Añade la URL completa
-        fetch(`http://localhost:5000/api/products/${productId}/reviews`),
+        fetch(`${API_URL}/products/${productId}`), // Añade la URL completa
+        fetch(`${API_URL}/products/${productId}/reviews`),
       ]);
 
       if (!productResponse.ok) throw new Error('Error al cargar el producto');
@@ -424,7 +425,7 @@ const ProductDetail = () => {
           </p>
         </div>
         <Link to="/carrito">
-          <button className="text-green-600 hover:text-green-700 font-medium text-sm underline">
+          <button className="text-green-600 cursor-pointer hover:text-green-700 font-medium text-sm underline">
             Ver carrito
           </button>
         </Link>
@@ -460,7 +461,7 @@ const ProductDetail = () => {
     {/* Botón secundario para ir al carrito */}
     {getCartItemCount() > 0 && (
       <Link to="/carrito">
-        <button className="w-full border-2 border-green-600 text-green-600 hover:bg-green-50 py-4 px-6 rounded-xl font-bold transition-colors flex items-center justify-center space-x-2">
+        <button className="cursor-pointer w-full border-2 border-green-600 text-green-600 hover:bg-green-50 py-4 px-6 rounded-xl font-bold transition-colors flex items-center justify-center space-x-2">
           <ShoppingCart className="h-5 w-5" />
           <span>Ver Carrito ({getCartItemCount()})</span>
         </button>

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { ChevronLeft, ChevronRight, Star, Eye } from "lucide-react";
 import { Link } from 'react-router-dom';
+import API_URL from "../config/api.config";
 
 // Tipos de datos
 interface Product {
@@ -50,7 +51,7 @@ const ProductCarousel = () => {
     const fetchProducts = async () => {
       setLoading(true);
       try {
-        const response = await fetch('http://localhost:5000/api/products');
+        const response = await fetch(`${API_URL}/products`);
         const data = await response.json();
         
         // Filtrar productos con rating y ordenar por rating descendente

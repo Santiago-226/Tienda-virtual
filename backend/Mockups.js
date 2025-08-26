@@ -617,7 +617,7 @@ const productos = [
       "precio": 185000,
       "precioOriginal": 220000,
       "images": [
-        "https://lh3.googleusercontent.com/proxy/mOGQ9GU_XeglaXdXNL2ybxSjablpvRcLlnvB-UZcAgVaBrEJL92Rvn3RP8LnTSZeqF1cikPy0NvdZsfjz3AaAXibj8sC26tKzt6GnYZW02c",
+        "https://www.peanuts-machine.com/wp-content/uploads/2022/10/structure-of-peanut-digger-machine.webp",
         "https://images.unsplash.com/photo-1571757767119-68b8db11f692?w=800&h=600&fit=crop",
         "https://images.unsplash.com/photo-1571757767119-68b8db11f692?w=800&h=600&fit=crop",
         "https://images.unsplash.com/photo-1622746277797-52c138abee43?w=800&h=600&fit=crop"

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { Search, Filter, Grid, List, ShoppingCart, X, Plus, Minus, CheckCircle, ChevronLeft, ChevronRight } from "lucide-react";
 import { ProductCard, ProductListItem } from '../components/ProductCard';
+import API_URL from "../config/api.config";
 
 // Tipos de datos
 interface Product {
@@ -157,7 +158,7 @@ const Products = () => {
     const fetchProducts = async () => {
       setLoading(true);
       try {
-        const response = await fetch('http://localhost:5000/api/products');
+        const response = await fetch(`${API_URL}/products`);
         
         if (!response.ok) {
           throw new Error(`Error ${response.status}: ${response.statusText}`);

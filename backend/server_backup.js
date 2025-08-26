@@ -5,11 +5,6 @@ require('dotenv').config();                // Variables de entorno
 
 const productos = require('./Mockups'); // Ruta De Productos de pureba
 
-// Importar configuración de base de datos
-const connectDB = require('./config/database');
-
-// Conectar a MongoDB Atlas (esto probará la conexión)
-connectDB();
 
 // CREAR APLICACIÓN EXPRESS
 const app = express();
@@ -114,50 +109,9 @@ app.get('/api/products/:id/reviews', (req, res) => {
   }
 });
 
-// Ruta de verificación de salud (NUEVA)
-app.get('/health', (req, res) => {
-  const mongoose = require('mongoose');
-  
-  res.json({ 
-    status: 'OK', 
-    timestamp: new Date().toISOString(),
-    database: mongoose.connection.readyState === 1 ? 'MongoDB Atlas conectado ✅' : 'MongoDB Atlas desconectado ❌',
-    environment: process.env.NODE_ENV || 'development',
-    port: PORT,
-    products: productos.length
-  });
-});
-
-// Ruta de información de MongoDB Atlas (NUEVA)
-app.get('/api/db-info', (req, res) => {
-  const mongoose = require('mongoose');
-  
-  if (mongoose.connection.readyState === 1) {
-    res.json({
-      connected: true,
-      database: mongoose.connection.name,
-      host: mongoose.connection.host,
-      port: mongoose.connection.port,
-      readyState: mongoose.connection.readyState,
-      readyStateText: 'Connected to MongoDB Atlas',
-      productsInMemory: productos.length
-    });
-  } else {
-    res.status(500).json({
-      connected: false,
-      readyState: mongoose.connection.readyState,
-      readyStateText: 'Disconnected from MongoDB Atlas'
-    });
-  }
-});
-
-// Iniciar servidor
+// INICIAR SERVIDOR
 app.listen(PORT, () => {
-  console.log(`🚀 Servidor Express corriendo en puerto ${PORT}`);
-  console.log(`🌐 Frontend: http://localhost:3000`);
-  console.log(`📊 API: http://localhost:${PORT}/api/products`);
-  console.log(`❤️  Health: http://localhost:${PORT}/health`);
-  console.log(`🗃️  DB Info: http://localhost:${PORT}/api/db-info`);
-  console.log(`📝 Entorno: ${process.env.NODE_ENV || 'development'}`);
-  console.log(`🛍️  Productos en memoria: ${productos.length}`);
+  console.log(`🚀 Servidor corriendo en puerto ${PORT}`);
+  console.log(`📡 API disponible en http://localhost:${PORT}`);
+  console.log(`🛍️ Productos en http://localhost:${PORT}/api/products`);
 });

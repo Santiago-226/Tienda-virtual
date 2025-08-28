@@ -1,15 +1,16 @@
+import  CategoriesGrid from '../components/CategoriesGrid';
 import Hero from '../components/Hero';
-import Services from '../components/Services';
-import AboutUs from '../components/AboutUs';
 import ProductCarousel from '../components/ProductCarousel';
+import DiscountProductCarousel from '../components/DiscountProductCarousel';
+
 
 function Home() {
   return (
     <div>
       <Hero />
-      <ProductCarousel/>
-      <Services />
-      <AboutUs />
+      <ProductCarousel />
+      <CategoriesGrid />
+      <DiscountProductCarousel />
     </div>
   );
 }

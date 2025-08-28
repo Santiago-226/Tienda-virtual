@@ -3,7 +3,7 @@ const productos = [
     {
       "id": 1,
       "nombre": "Semillas de Maíz Premium Variedad Híbrida",
-      "precio": 5000,
+      "precio": 55000,
       "precioOriginal": 55000,
       "images": [
         "https://images.unsplash.com/photo-1574323347407-f5e1ad6d020b?w=800&h=600&fit=crop",
@@ -57,7 +57,7 @@ const productos = [
         "https://images.unsplash.com/photo-1586773860418-d37222d8fce3?w=800&h=600&fit=crop",
         "https://images.unsplash.com/photo-1618485451585-873391ce0c91?w=800&h=600&fit=crop"
       ],
-      "categoryId": 2,
+      "categoryId": 1,
       "descripcion": "Fertilizante balanceado NPK 15-15-15 con micronutrientes esenciales para el crecimiento óptimo de tus cultivos.",
       "caracteristicas": [
         "Balance perfecto de nitrógeno, fósforo y potasio",
@@ -100,7 +100,7 @@ const productos = [
         "https://images.unsplash.com/photo-1590622783539-bae63fec9a5e?w=800&h=600&fit=crop",
         "https://images.unsplash.com/photo-1622484125614-6fe370d4ef74?w=800&h=600&fit=crop"
       ],
-      "categoryId": 3,
+      "categoryId": 1,
       "descripcion": "Kit completo de riego por goteo para 100 metros lineales, ideal para optimizar el uso de agua en cultivos.",
       "caracteristicas": [
         "Ahorra hasta 60% de agua",
@@ -144,7 +144,7 @@ const productos = [
         "https://images.unsplash.com/photo-1593483316242-27a8d6b7c1c3?w=800&h=600&fit=crop",
         "https://images.unsplash.com/photo-1572981779307-1028981c51d6?w=800&h=600&fit=crop"
       ],
-      "categoryId": 4,
+      "categoryId": 1,
       "descripcion": "Invernadero tipo túnel de 6x10 metros, estructura galvanizada y cubierta de polietileno UV protegido.",
       "caracteristicas": [
         "Estructura galvanizada anticorrosión",
@@ -188,7 +188,7 @@ const productos = [
         "https://images.unsplash.com/photo-1622746277797-52c138abee43?w=800&h=600&fit=crop",
         "https://images.unsplash.com/photo-1571757767119-68b8db11f692?w=800&h=600&fit=crop"
       ],
-      "categoryId": 5,
+      "categoryId": 1,
       "descripcion": "Tractor agrícola compacto de 25HP, motor diésel, ideal para pequeñas y medianas explotaciones agrícolas.",
       "caracteristicas": [
         "Motor diésel 3 cilindros",
@@ -233,7 +233,7 @@ const productos = [
         "https://images.unsplash.com/photo-1589923188937-cb64779f4abe?w=800&h=600&fit=crop",
         "https://images.unsplash.com/photo-1596195689405-2e6d5ca3bb39?w=800&h=600&fit=crop"
       ],
-      "categoryId": 6,
+      "categoryId": 1,
       "descripcion": "Herbicida selectivo post-emergente para control de malezas de hoja ancha en cultivos de cereales.",
       "caracteristicas": [
         "Control efectivo de malezas",
@@ -275,7 +275,7 @@ const productos = [
         "https://images.unsplash.com/photo-1590622783539-bae63fec9a5e?w=800&h=600&fit=crop",
         "https://images.unsplash.com/photo-1622484125614-6fe370d4ef74?w=800&h=600&fit=crop"
       ],
-      "categoryId": 7,
+      "categoryId": 1,
       "descripcion": "Aspersora manual de mochila con capacidad de 20 litros, ideal para aplicación precisa de agroquímicos.",
       "caracteristicas": [
         "Capacidad 20 litros",
@@ -361,7 +361,7 @@ const productos = [
         "https://images.unsplash.com/photo-1593483316242-27a8d6b7c1c3?w=800&h=600&fit=crop",
         "https://images.unsplash.com/photo-1572981779307-1028981c51d6?w=800&h=600&fit=crop"
       ],
-      "categoryId": 8,
+      "categoryId": 1,
       "descripcion": "Malla sombra de polipropileno con 70% de bloqueo solar, ideal para proteger cultivos de la radiación excesiva.",
       "caracteristicas": [
         "70% sombreado",
@@ -404,7 +404,7 @@ const productos = [
         "https://images.unsplash.com/photo-1610824355625-92183568c263?w=800&h=600&fit=crop",
         "https://images.unsplash.com/photo-1586773860418-d37222d8fce3?w=800&h=600&fit=crop"
       ],
-      "categoryId": 9,
+      "categoryId": 1,
       "descripcion": "Humus de lombriz 100% orgánico, enriquecido con microorganismos benéficos para mejorar la fertilidad del suelo.",
       "caracteristicas": [
         "100% orgánico",
@@ -447,7 +447,7 @@ const productos = [
         "https://images.unsplash.com/photo-1597481485088-5d07a1a45c4e?w=800&h=600&fit=crop",
         "https://images.unsplash.com/photo-1593483316242-27a8d6b7c1c3?w=800&h=600&fit=crop"
       ],
-      "categoryId": 10,
+      "categoryId": 1,
       "descripcion": "Podadora de altura profesional con motor a gasolina, ideal para mantenimiento de árboles frutales y ornamentales.",
       "caracteristicas": [
         "Motor 2 tiempos 25cc",
@@ -491,7 +491,7 @@ const productos = [
         "https://images.unsplash.com/photo-1589923188937-cb64779f4abe?w=800&h=600&fit=crop",
         "https://images.unsplash.com/photo-1596195689405-2e6d5ca3bb39?w=800&h=600&fit=crop"
       ],
-      "categoryId": 11,
+      "categoryId": 1,
       "descripcion": "Insecticida biológico a base de extracto de neem, efectivo contra plagas y respetuoso con el medio ambiente.",
       "caracteristicas": [
         "100% orgánico",
@@ -509,7 +509,7 @@ const productos = [
         "Presentación": "Líquido concentrado",
         "Volumen": "1 L"
       },
-      "stock": 5,
+      "stock": 95,
       "rating": 4.6,
       "totalReviews": 128,
       "marca": "BioProtect",
@@ -534,7 +534,7 @@ const productos = [
         "https://images.unsplash.com/photo-1590622783539-bae63fec9a5e?w=800&h=600&fit=crop",
         "https://images.unsplash.com/photo-1622484125614-6fe370d4ef74?w=800&h=600&fit=crop"
       ],
-      "categoryId": 12,
+      "categoryId": 1,
       "descripcion": "Kit inicial de cultivo hidropónico para 20 plantas, ideal para comenzar en el mundo de la hidroponía doméstica.",
       "caracteristicas": [
         "Sistema NFT (Nutrient Film Technique)",
@@ -579,7 +579,7 @@ const productos = [
         "https://images.unsplash.com/photo-1610824355625-92183568c263?w=800&h=600&fit=crop",
         "https://images.unsplash.com/photo-1586773860418-d37222d8fce3?w=800&h=600&fit=crop"
       ],
-      "categoryId": 13,
+      "categoryId": 1,
       "descripcion": "Consorcio de microorganismos efectivos (EM) para mejorar la salud del suelo y el crecimiento vegetal.",
       "caracteristicas": [
         "Mejora la microbiota del suelo",
@@ -622,7 +622,7 @@ const productos = [
         "https://images.unsplash.com/photo-1571757767119-68b8db11f692?w=800&h=600&fit=crop",
         "https://images.unsplash.com/photo-1622746277797-52c138abee43?w=800&h=600&fit=crop"
       ],
-      "categoryId": 14,
+      "categoryId": 1,
       "descripcion": "Cosechadora manual de maní que facilita la extracción de vainas sin dañar los granos, aumentando la eficiencia.",
       "caracteristicas": [
         "Extracción limpia de vainas",
@@ -665,7 +665,7 @@ const productos = [
         "https://images.unsplash.com/photo-1590622783539-bae63fec9a5e?w=800&h=600&fit=crop",
         "https://images.unsplash.com/photo-1622484125614-6fe370d4ef74?w=800&h=600&fit=crop"
       ],
-      "categoryId": 15,
+      "categoryId": 1,
       "descripcion": "Sensor digital de humedad del suelo con display LCD, ideal para optimizar el riego y ahorrar agua.",
       "caracteristicas": [
         "Medición precisa de humedad",
@@ -752,7 +752,7 @@ const productos = [
         "https://images.unsplash.com/photo-1590622783539-bae63fec9a5e?w=800&h=600&fit=crop",
         "https://images.unsplash.com/photo-1622484125614-6fe370d4ef74?w=800&h=600&fit=crop"
       ],
-      "categoryId": 16,
+      "categoryId": 1,
       "descripcion": "Bomba de agua solar de 1HP, ideal para riego agrícola donde no hay acceso a red eléctrica convencional.",
       "caracteristicas": [
         "Energía solar",
@@ -797,7 +797,7 @@ const productos = [
         "https://images.unsplash.com/photo-1590622783539-bae63fec9a5e?w=800&h=600&fit=crop",
         "https://images.unsplash.com/photo-1622484125614-6fe370d4ef74?w=800&h=600&fit=crop"
       ],
-      "categoryId": 17,
+      "categoryId": 1,
       "descripcion": "Kit completo para análisis básico de suelo, mide pH, NPK y materia orgánica de forma sencilla y precisa.",
       "caracteristicas": [
         "Mide pH, N, P, K",
@@ -841,7 +841,7 @@ const productos = [
         "https://images.unsplash.com/photo-1593483316242-27a8d6b7c1c3?w=800&h=600&fit=crop",
         "https://images.unsplash.com/photo-1572981779307-1028981c51d6?w=800&h=600&fit=crop"
       ],
-      "categoryId": 8,
+      "categoryId": 1,
       "descripcion": "Sistema de cercado eléctrico solar para 500 metros, ideal para protección de cultivos y control de animales.",
       "caracteristicas": [
         "Energía solar",

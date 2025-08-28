@@ -1,5 +1,6 @@
 import React from "react";
 import { Award, Users, Leaf, Target, Heart} from "lucide-react";
+import Services from "../components/Services";
 
 const AboutUs = () => {
   const stats = [
@@ -29,6 +30,9 @@ const AboutUs = () => {
 
   return (
     <section className="py-20 bg-white">
+      <div>
+        <Services />
+      </div>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="text-center mb-16">

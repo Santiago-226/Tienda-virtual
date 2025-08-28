@@ -4,6 +4,7 @@ const cors = require('cors');              // Cross-Origin Resource Sharing
 require('dotenv').config();                // Variables de entorno
 
 const productos = require('./Mockups'); // Ruta De Productos de pureba
+const categories = require('./Categories'); // Ruta De Categorias de pureba
 
 // Importar configuración de base de datos
 const connectDB = require('./config/database');
@@ -65,16 +66,36 @@ app.get('/', (req, res) => {
   });
 });
 
-// Ruta para obtener todos los productos
+// Ruta para obtener todos los productos con las categorías
 app.get('/api/products', (req, res) => {
   try {
-    // Simula una respuesta de base de datos
-    res.json(productos);
+    // Combinar productos con información de categorías
+    const productsWithCategories = productos.map(product => {
+      const category = categories.find(cat => cat.id === product.categoryId);
+      return {
+        ...product,
+        category: category ? category.nombre : 'Sin categoría'
+      };
+    });
+    
+    res.json(productsWithCategories);
   } catch (error) {
     // Manejo de errores
     res.status(500).json({ 
       error: error.message,
       message: 'Error al obtener productos'
+    });
+  }
+});
+
+// También podrías crear una ruta para obtener categorías si la necesitas
+app.get('/api/categories', (req, res) => {
+  try {
+    res.json(categories);
+  } catch (error) {
+    res.status(500).json({ 
+      error: error.message,
+      message: 'Error al obtener categorías'
     });
   }
 });
@@ -110,6 +131,78 @@ app.get('/api/products/:id/reviews', (req, res) => {
     res.status(500).json({ 
       error: error.message,
       message: 'Error al obtener las reseñas'
+    });
+  }
+});
+
+// Ruta para obtener productos por categoría ID
+app.get('/api/categories/:id/products', (req, res) => {
+  try {
+    const categoryId = parseInt(req.params.id);
+    
+    // Verificar si la categoría existe
+    const category = categories.find(cat => cat.id === categoryId);
+    
+    if (!category) {
+      return res.status(404).json({ 
+        message: 'Categoría no encontrada',
+        error: `No existe una categoría con el ID ${categoryId}`
+      });
+    }
+    
+    // Filtrar productos por categoryId
+    const productsInCategory = productos.filter(product => product.categoryId === categoryId);
+    
+    // Combinar con información de la categoría
+    const productsWithCategory = productsInCategory.map(product => ({
+      ...product,
+      category: category.nombre // Agregar el nombre de la categoría
+    }));
+    
+    res.json({
+      category: {
+        id: category.id,
+        nombre: category.nombre,
+        image: category.image,
+        descripcion: category.descripcion
+      },
+      products: productsWithCategory,
+      count: productsWithCategory.length
+    });
+    
+  } catch (error) {
+    res.status(500).json({ 
+      error: error.message,
+      message: 'Error al obtener productos de la categoría'
+    });
+  }
+});
+
+// Ruta alternativa para obtener solo la información de la categoría
+app.get('/api/categories/:id', (req, res) => {
+  try {
+    const categoryId = parseInt(req.params.id);
+    const category = categories.find(cat => cat.id === categoryId);
+    
+    if (!category) {
+      return res.status(404).json({ 
+        message: 'Categoría no encontrada',
+        error: `No existe una categoría con el ID ${categoryId}`
+      });
+    }
+    
+    // Contar productos en esta categoría
+    const productCount = productos.filter(product => product.categoryId === categoryId).length;
+    
+    res.json({
+      ...category,
+      productCount: productCount
+    });
+    
+  } catch (error) {
+    res.status(500).json({ 
+      error: error.message,
+      message: 'Error al obtener la categoría'
     });
   }
 });

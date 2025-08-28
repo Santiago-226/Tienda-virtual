@@ -1,15 +1,17 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { Search, Filter, Grid, List, ShoppingCart, X, Plus, Minus, CheckCircle, ChevronLeft, ChevronRight } from "lucide-react";
+import { useParams, Link } from "react-router-dom";
+import { Search, Filter, Grid, List, ShoppingCart, X, Plus, Minus, CheckCircle, ChevronLeft, ChevronRight, ArrowLeft } from "lucide-react";
 import { ProductCard, ProductListItem } from '../components/ProductCard';
-import  API_URL  from '../config/api.config';
+import API_URL from '../config/api.config';
 
-// Tipos de datos actualizados
+// Tipos de datos
 interface Category {
   id: number;
   nombre: string;
+  image: string;
+  descripcion?: string;
 }
 
-// Tipos de datos
 interface Product {
   id: number;
   nombre: string;
@@ -34,6 +36,12 @@ interface CartItem {
   category: string;
   marca: string;
   rating?: number;
+}
+
+interface CategoryProductsResponse {
+  category: Category;
+  products: Product[];
+  count: number;
 }
 
 // Componente Skeleton para vista de grid
@@ -126,16 +134,16 @@ const OptimizedModalImage: React.FC<{
   );
 };
 
-const Products = () => {
+const CategoryProducts = () => {
+  const { id } = useParams<{ id: string }>();
+  const [category, setCategory] = useState<Category | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
   const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("Todos");
   const [sortBy, setSortBy] = useState("nombre");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
-  const [priceRange, setPriceRange] = useState({ min: 0, max: 1000000000 });
 
   // Estados para el modal
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
@@ -148,9 +156,6 @@ const Products = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [productsPerPage] = useState(15);
 
-  // Obtener categorías únicas
-  const categoryOptions = ["Todos", ...categories.map(cat => cat.nombre)];
-
   // Función para formatear precios
   const formatPrice = useCallback((price: number) => {
     return new Intl.NumberFormat('es-CO', {
@@ -160,52 +165,43 @@ const Products = () => {
     }).format(price);
   }, []);
 
-  // Función para calcular el porcentaje de descuento
-  const calculateDiscountPercentage = useCallback((product: Product) => {
-    if (!product.precioOriginal) return 0;
-    return Math.round(((product.precioOriginal - product.precio) / product.precioOriginal) * 100);
-  }, []);
-
-    // Fetch de productos y categorías
+  // Fetch de productos de la categoría
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchCategoryProducts = async () => {
+      if (!id) return;
+      
       setLoading(true);
+      setError(null);
+      
       try {
-        // Obtener productos
-        const productsResponse = await fetch(`${API_URL}/products`);
-        if (!productsResponse.ok) {
-          throw new Error(`Error ${productsResponse.status}: ${productsResponse.statusText}`);
-        }
-        const productsData = await productsResponse.json();
-        setProducts(productsData);
-        setFilteredProducts(productsData);
-
-        // Obtener categorías (opcional, si necesitas la lista completa)
-        const categoriesResponse = await fetch(`${API_URL}/categories`);
-        if (categoriesResponse.ok) {
-          const categoriesData = await categoriesResponse.json();
-          setCategories(categoriesData);
+        const response = await fetch(`${API_URL}/categories/${id}/products`);
+        
+        if (!response.ok) {
+          if (response.status === 404) {
+            throw new Error('Categoría no encontrada');
+          }
+          throw new Error(`Error ${response.status}: ${response.statusText}`);
         }
         
+        const data: CategoryProductsResponse = await response.json();
+        setCategory(data.category);
+        setProducts(data.products);
+        setFilteredProducts(data.products);
       } catch (error) {
-        console.error('Error fetching data:', error);
+        console.error('Error fetching category products:', error);
+        setError(error instanceof Error ? error.message : 'Error al cargar los productos');
       } finally {
         setLoading(false);
       }
     };
 
-    fetchData();
-  }, []);
-
+    fetchCategoryProducts();
+  }, [id]);
 
   // Filtrar y ordenar productos
   useEffect(() => {
     let filtered = products.filter(product => {
-      const matchesSearch = product.nombre.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchesCategory = selectedCategory === "Todos" || product.category === selectedCategory;
-      const matchesPrice = product.precio >= priceRange.min && product.precio <= priceRange.max;
-      
-      return matchesSearch && matchesCategory && matchesPrice;
+      return product.nombre.toLowerCase().includes(searchTerm.toLowerCase());
     });
 
     // Ordenar productos
@@ -217,12 +213,6 @@ const Products = () => {
           return b.precio - a.precio;
         case "rating":
           return (b.rating || 0) - (a.rating || 0);
-        case "nombre-desc": // Nuevo: Nombre Z-A
-          return b.nombre.localeCompare(a.nombre);
-        case "descuento": // Nuevo: Mayor descuento
-          const discountA = calculateDiscountPercentage(a);
-          const discountB = calculateDiscountPercentage(b);
-          return discountB - discountA;
         case "nombre":
         default:
           return a.nombre.localeCompare(b.nombre);
@@ -230,8 +220,8 @@ const Products = () => {
     });
 
     setFilteredProducts(filtered);
-    setCurrentPage(1); // Resetear a la primera página cuando cambian los filtros
-  }, [products, searchTerm, selectedCategory, sortBy, priceRange, calculateDiscountPercentage]);
+    setCurrentPage(1);
+  }, [products, searchTerm, sortBy]);
 
   // Obtener productos actuales para la página
   const indexOfLastProduct = currentPage * productsPerPage;
@@ -242,14 +232,8 @@ const Products = () => {
   // Función para cambiar de página con scroll al top
   const paginate = useCallback((pageNumber: number) => {
     setCurrentPage(pageNumber);
-    // Scroll al top de la página
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, []);
-
-  // Efecto para scroll al top cuando cambia la página
-  useEffect(() => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  }, [currentPage]);
 
   // Funciones del modal y carrito
   const openModal = useCallback((product: Product) => {
@@ -257,7 +241,6 @@ const Products = () => {
     setQuantity(1);
     setIsModalOpen(true);
     setShowSuccessMessage(false);
-    // Prevenir scroll del body cuando el modal está abierto
     document.body.style.overflow = 'hidden';
   }, []);
 
@@ -266,7 +249,6 @@ const Products = () => {
     setSelectedProduct(null);
     setQuantity(1);
     setShowSuccessMessage(false);
-    // Restaurar scroll del body
     document.body.style.overflow = 'unset';
   }, []);
 
@@ -301,12 +283,10 @@ const Products = () => {
         rating: selectedProduct.rating
       };
       
-      // Obtener carrito existente
       const existingCart = JSON.parse(localStorage.getItem('cart') || '[]');
       const existingItemIndex = existingCart.findIndex((item: CartItem) => item.id === selectedProduct.id);
       
       if (existingItemIndex >= 0) {
-        // Si el producto ya existe, actualizar cantidad
         const newQuantity = existingCart[existingItemIndex].quantity + quantity;
         if (newQuantity <= (selectedProduct.stock || 10)) {
           existingCart[existingItemIndex].quantity = newQuantity;
@@ -314,20 +294,14 @@ const Products = () => {
           existingCart[existingItemIndex].quantity = selectedProduct.stock || 10;
         }
       } else {
-        // Si es nuevo, agregarlo
         existingCart.push(cartItem);
       }
       
-      // Guardar en localStorage
       localStorage.setItem('cart', JSON.stringify(existingCart));
-      
-      // Notificar al header que se actualizó el carrito
       window.dispatchEvent(new Event('cartUpdated'));
       
-      // Mostrar mensaje de éxito
       setShowSuccessMessage(true);
       
-      // Cerrar modal después de 1.5 segundos
       setTimeout(() => {
         closeModal();
       }, 1500);
@@ -346,105 +320,134 @@ const Products = () => {
     };
   }, []);
 
+  // Estado de error
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-red-500 mb-4">
+            <X className="h-16 w-16 mx-auto" />
+          </div>
+          <h2 className="text-2xl font-bold text-gray-800 mb-2">Error</h2>
+          <p className="text-gray-600 mb-4">{error}</p>
+          <Link
+            to="/categories"
+            className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors"
+          >
+            Ver todas las categorías
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-gray-50 pt-10">
+    <div className="min-h-screen bg-gray-50">
+      {/* Hero Section */}
+      {!loading && category && (
+        <div className="relative bg-gradient-to-r from-green-600 to-green-700 text-white overflow-hidden">
+          <div className="absolute inset-0">
+            <img
+              src={category.image}
+              alt={category.nombre}
+              className="w-full h-full object-cover opacity-80"
+            />
+            <div className="absolute inset-0 bg-gradient-to-r from-green-600/80 to-green-700/80"></div>
+          </div>
+          
+          <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+            {/* Navegación de regreso */}
+            <div className="mb-6">
+              <Link
+                to="/categories"
+                className="inline-flex items-center text-white/90 hover:text-white transition-colors"
+              >
+                <ArrowLeft className="h-5 w-5 mr-2" />
+                Volver a categorías
+              </Link>
+            </div>
+
+            <div className="text-center">
+              <h1 className="text-4xl md:text-5xl font-bold mb-4">
+                {category.nombre}
+              </h1>
+              {category.descripcion && (
+                <p className="text-xl md:text-2xl text-green-100 max-w-3xl mx-auto mb-6">
+                  {category.descripcion}
+                </p>
+              )}
+              <div className="w-24 h-1 bg-yellow-400 mx-auto rounded-full"></div>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="max-w-7xl mx-auto px-4 py-8">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold text-gray-800 mb-2">
-            Nuestros <span className="text-green-600">Productos</span>
-          </h1>
-          <p className="text-xl text-gray-600">
-            Encuentra todo lo que necesitas para tu proyecto agrícola
-          </p>
-        </div>
-
         {/* Filtros y búsqueda */}
-        <div className="bg-white rounded-xl shadow-lg p-6 mb-8 border border-gray-100">
-          <div className="grid md:grid-cols-4 gap-4 items-end">
-            {/* Búsqueda */}
-            <div className="relative">
-              <label className="block text-sm font-medium text-gray-700 mb-2">Buscar</label>
+        {!loading && category && (
+          <div className="bg-white rounded-xl shadow-lg p-6 mb-8 border border-gray-100">
+            <div className="grid md:grid-cols-3 gap-4 items-end">
+              {/* Búsqueda */}
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
-                <input
-                  type="text"
-                  placeholder="Buscar productos..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
-                />
+                <label className="block text-sm font-medium text-gray-700 mb-2">Buscar en {category.nombre}</label>
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+                  <input
+                    type="text"
+                    placeholder="Buscar productos..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
+                  />
+                </div>
               </div>
-            </div>
 
-            {/* Categorías */}
-             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Categoría</label>
-              <select
-                value={selectedCategory}
-                onChange={(e) => setSelectedCategory(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
-              >
-                {categoryOptions.map(category => (
-                  <option key={category} value={category}>{category}</option>
-                ))}
-              </select>
-            </div>
-
-            {/* Ordenar */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Ordenar por</label>
-              <select
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
-              >
-                <option value="nombre">Nombre A-Z</option>
-                <option value="nombre-desc">Nombre Z-A</option>
-                <option value="precio-asc">Precio: Menor a Mayor</option>
-                <option value="precio-desc">Precio: Mayor a Menor</option>
-                <option value="descuento">Mayor Descuento</option>
-                <option value="rating">Mejor Calificación</option>
-              </select>
-            </div>
-
-            {/* Vista */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Vista</label>
-              <div className="flex space-x-2">
-                <button
-                  onClick={() => setViewMode("grid")}
-                  className={`p-2 rounded-lg transition-colors ${
-                    viewMode === "grid" 
-                      ? "bg-green-600 text-white" 
-                      : "bg-gray-100 hover:bg-gray-200 text-gray-600"
-                  }`}
-                  title="Vista en cuadrícula"
+              {/* Ordenar */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Ordenar por</label>
+                <select
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
                 >
-                  <Grid className="h-5 w-5" />
-                </button>
-                <button
-                  onClick={() => setViewMode("list")}
-                  className={`p-2 rounded-lg transition-colors ${
-                    viewMode === "list" 
-                      ? "bg-green-600 text-white" 
-                      : "bg-gray-100 hover:bg-gray-200 text-gray-600"
-                  }`}
-                  title="Vista en lista"
-                >
-                  <List className="h-5 w-5" />
-                </button>
+                  <option value="nombre">Nombre A-Z</option>
+                  <option value="precio-asc">Precio: Menor a Mayor</option>
+                  <option value="precio-desc">Precio: Mayor a Menor</option>
+                  <option value="rating">Mejor Calificación</option>
+                </select>
+              </div>
+
+              {/* Vista */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Vista</label>
+                <div className="flex space-x-2">
+                  <button
+                    onClick={() => setViewMode("grid")}
+                    className={`p-2 rounded-lg transition-colors ${
+                      viewMode === "grid" 
+                        ? "bg-green-600 text-white" 
+                        : "bg-gray-100 hover:bg-gray-200 text-gray-600"
+                    }`}
+                    title="Vista en cuadrícula"
+                  >
+                    <Grid className="h-5 w-5" />
+                  </button>
+                  <button
+                    onClick={() => setViewMode("list")}
+                    className={`p-2 rounded-lg transition-colors ${
+                      viewMode === "list" 
+                        ? "bg-green-600 text-white" 
+                        : "bg-gray-100 hover:bg-gray-200 text-gray-600"
+                    }`}
+                    title="Vista en lista"
+                  >
+                    <List className="h-5 w-5" />
+                  </button>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-
-        {/* Resultados */}
-        <div className="mb-6 flex justify-between items-center">
-          <div className="text-sm text-gray-500">
-            {viewMode === "grid" ? "Vista en cuadrícula" : "Vista en lista"}
-          </div>
-        </div>
+        )}
 
         {/* Lista de productos */}
         {loading ? (
@@ -472,19 +475,19 @@ const Products = () => {
               No se encontraron productos
             </h3>
             <p className="text-gray-600 mb-4">
-              Intenta ajustar los filtros de búsqueda
+              {searchTerm 
+                ? `No hay productos que coincidan con "${searchTerm}" en esta categoría`
+                : 'Esta categoría no tiene productos disponibles'
+              }
             </p>
-            <button
-              onClick={() => {
-                setSearchTerm("");
-                setSelectedCategory("Todos");
-                setSortBy("nombre");
-                setPriceRange({ min: 0, max: 1000000000 });
-              }}
-              className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors"
-            >
-              Limpiar filtros
-            </button>
+            {searchTerm && (
+              <button
+                onClick={() => setSearchTerm("")}
+                className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors"
+              >
+                Limpiar búsqueda
+              </button>
+            )}
           </div>
         ) : (
           // Lista de productos
@@ -501,7 +504,6 @@ const Products = () => {
                     product={product} 
                     onOpenModal={openModal}
                     formatPrice={formatPrice}
-                    calculateDiscountPercentage={calculateDiscountPercentage}
                   />
                 ) : (
                   <ProductListItem 
@@ -509,7 +511,6 @@ const Products = () => {
                     product={product} 
                     onOpenModal={openModal}
                     formatPrice={formatPrice}
-                    calculateDiscountPercentage={calculateDiscountPercentage}
                   />
                 )
               ))}
@@ -556,14 +557,13 @@ const Products = () => {
           </>
         )}
 
-        {/* Modal de confirmación */}
+        {/* Modal de confirmación (igual que en Products) */}
         {isModalOpen && selectedProduct && (
           <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
             <div 
               className="bg-white rounded-2xl shadow-2xl max-w-md w-full max-h-[90vh] overflow-y-auto"
               onClick={(e) => e.stopPropagation()}
             >
-              {/* Header del modal */}
               <div className="flex items-center justify-between p-6 border-b border-gray-200 sticky top-0 bg-white rounded-t-2xl">
                 <h3 className="text-xl font-bold text-gray-800">Agregar al Carrito</h3>
                 <button
@@ -576,7 +576,6 @@ const Products = () => {
               </div>
 
               {showSuccessMessage ? (
-                /* Mensaje de éxito */
                 <div className="p-8 text-center">
                   <div className="animate-bounce mb-4">
                     <CheckCircle className="h-16 w-16 text-green-600 mx-auto" />
@@ -594,9 +593,7 @@ const Products = () => {
                   </div>
                 </div>
               ) : (
-                /* Contenido del producto */
                 <div className="p-6">
-                  {/* Imagen y detalles básicos */}
                   <div className="flex space-x-4 mb-6">
                     <OptimizedModalImage
                       src={selectedProduct.images[0]}
@@ -623,7 +620,7 @@ const Products = () => {
                               {formatPrice(selectedProduct.precioOriginal)}
                             </div>
                             <span className="bg-red-100 text-red-600 px-2 py-1 rounded text-xs font-medium">
-                              -{calculateDiscountPercentage(selectedProduct)}% OFF
+                              -{Math.round(((selectedProduct.precioOriginal - selectedProduct.precio) / selectedProduct.precioOriginal) * 100)}% OFF
                             </span>
                           </>
                         )}
@@ -631,7 +628,6 @@ const Products = () => {
                     </div>
                   </div>
 
-                  {/* Descripción */}
                   {selectedProduct.descripcion && (
                     <div className="mb-6">
                       <h5 className="text-sm font-medium text-gray-700 mb-2">Descripción</h5>
@@ -641,40 +637,6 @@ const Products = () => {
                     </div>
                   )}
 
-                  {/* Rating */}
-                  {selectedProduct.rating && (
-                    <div className="mb-6">
-                      <h5 className="text-sm font-medium text-gray-700 mb-2">Calificación</h5>
-                      <div className="flex items-center space-x-2">
-                        <div className="flex text-yellow-400">
-                          {[...Array(5)].map((_, i) => {
-                            const ratingValue = i + 1;
-                            return (
-                              <svg
-                                key={i}
-                                className={`h-4 w-4 ${
-                                  selectedProduct.rating! >= ratingValue
-                                    ? 'fill-current'
-                                    : selectedProduct.rating! >= ratingValue - 0.5
-                                    ? 'fill-current opacity-50'
-                                    : 'text-gray-300'
-                                }`}
-                                fill="currentColor"
-                                viewBox="0 0 20 20"
-                              >
-                                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                              </svg>
-                            );
-                          })}
-                        </div>
-                        <span className="text-sm text-gray-600">
-                          {selectedProduct.rating.toFixed(1)} de 5
-                        </span>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Stock disponible */}
                   <div className="mb-6">
                     <div className="flex items-center justify-between">
                       <span className="text-sm text-gray-600">Stock disponible:</span>
@@ -695,7 +657,6 @@ const Products = () => {
                     )}
                   </div>
 
-                  {/* Selector de cantidad */}
                   <div className="mb-6">
                     <label className="block text-sm font-medium text-gray-700 mb-3">
                       Cantidad
@@ -728,15 +689,8 @@ const Products = () => {
                         <Plus className="h-4 w-4" />
                       </button>
                     </div>
-                    
-                    {quantity >= (selectedProduct.stock || 10) && (
-                      <div className="mt-2 text-xs text-red-600 text-center">
-                        Máximo stock alcanzado
-                      </div>
-                    )}
                   </div>
 
-                  {/* Total */}
                   <div className="mb-6 p-4 bg-gray-50 rounded-lg">
                     <div className="flex justify-between items-center">
                       <span className="text-gray-600">Subtotal:</span>
@@ -751,7 +705,6 @@ const Products = () => {
                     )}
                   </div>
 
-                  {/* Botones de acción */}
                   <div className="flex space-x-3">
                     <button
                       onClick={closeModal}
@@ -780,4 +733,4 @@ const Products = () => {
   );
 };
 
-export default Products;
+export default CategoryProducts;

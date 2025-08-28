@@ -64,7 +64,7 @@ const ProductCarousel = () => {
         });
         
         // Tomar los primeros 8 productos con mejor rating
-        setProducts(sortedProducts.slice(0, 8));
+        setProducts(sortedProducts.slice(0, 10));
       } catch (error) {
         console.error('Error fetching products:', error);
         
@@ -88,7 +88,7 @@ const ProductCarousel = () => {
     if (products.length <= itemsPerView) return;
     
     setCurrentIndex((prevIndex) => {
-      const maxIndex = Math.ceil(products.length / itemsPerView) - 1;
+      const maxIndex = products.length - itemsPerView;
       return prevIndex >= maxIndex ? 0 : prevIndex + 1;
     });
   };
@@ -97,7 +97,7 @@ const ProductCarousel = () => {
     if (products.length <= itemsPerView) return;
     
     setCurrentIndex((prevIndex) => {
-      const maxIndex = Math.ceil(products.length / itemsPerView) - 1;
+      const maxIndex = products.length - itemsPerView;
       return prevIndex === 0 ? maxIndex : prevIndex - 1;
     });
   };
@@ -134,7 +134,8 @@ const ProductCarousel = () => {
             Productos <span className="text-green-600">Mejor Calificados</span>
           </h2>
           <p className="text-lg md:text-xl text-gray-600 max-w-3xl mx-auto">
-            Descubre nuestros productos agrícolas mejor calificados por nuestros clientes
+            Descubre nuestros productos agrícolas mejor calificados por nuestros
+            clientes
           </p>
           <div className="w-24 h-1 bg-gradient-to-r from-green-500 to-yellow-400 mx-auto mt-6 rounded-full"></div>
         </div>
@@ -305,7 +306,7 @@ const ProductCarousel = () => {
             {/* Indicadores */}
             <div className="flex space-x-2">
               {Array.from({
-                length: Math.ceil(products.length / itemsPerView),
+                length: products.length - itemsPerView + 1,
               }).map((_, index) => (
                 <button
                   key={index}
@@ -334,7 +335,7 @@ const ProductCarousel = () => {
         {/* Botón para ver todos los productos */}
         <div className="text-center mt-8 sm:mt-12">
           <Link
-            to="/productos"
+            to="/products"
             className="inline-flex items-center justify-center px-5 py-2.5 sm:px-6 sm:py-3 border border-transparent text-sm sm:text-base font-medium rounded-md text-white bg-green-600 hover:bg-green-700 transition-colors shadow-md hover:shadow-lg"
           >
             Ver todos los productos

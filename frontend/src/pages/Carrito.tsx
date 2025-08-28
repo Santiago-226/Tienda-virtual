@@ -12,7 +12,7 @@ import {
   AlertCircle,
   Check,
 } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 // Interfaces
 interface CartItem {
@@ -41,6 +41,7 @@ const Carrito = () => {
   const [couponCode, setCouponCode] = useState("");
   const [appliedCoupon, setAppliedCoupon] = useState<string | null>(null);
   const [couponError, setCouponError] = useState("");
+  const navigate = useNavigate();
 
   // Simular usuario logueado (cambiar cuando tengas autenticación)
   const isLoggedIn = false;
@@ -199,7 +200,7 @@ const Carrito = () => {
             <p className="text-gray-600 mb-8">
               Explora nuestros productos y agrega algunos al carrito
             </p>
-            <Link to="/productos">
+            <Link to="/products">
               <button className="bg-green-600 hover:bg-green-700 text-white px-8 py-4 rounded-xl font-bold transition-colors">
                 Explorar Productos
               </button>
@@ -216,12 +217,12 @@ const Carrito = () => {
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center space-x-4">
-            <Link to="/productos">
-              <button className="cursor-pointer flex items-center space-x-2 text-gray-600 hover:text-green-600 transition-colors">
+
+              <button onClick={() => navigate(-1)} className="cursor-pointer flex items-center space-x-2 text-gray-600 hover:text-green-600 transition-colors">
                 <ArrowLeft className="h-5 w-5" />
                 <span>Continuar comprando</span>
               </button>
-            </Link>
+
           </div>
           <button
             onClick={clearCart}
@@ -249,7 +250,7 @@ const Carrito = () => {
                     <div className="flex items-center space-x-4">
                       {/* Imagen del producto */}
                       <div className="flex-shrink-0">
-                        <Link to={`/producto/${item.id}`}>
+                        <Link to={`/products/${item.id}`}>
                           <img
                             src={item.image}
                             alt={item.nombre}
@@ -262,7 +263,7 @@ const Carrito = () => {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-start justify-between">
                           <div>
-                            <Link to={`/producto/${item.id}`}>
+                            <Link to={`/products/${item.id}`}>
                               <h3 className="text-lg font-medium text-gray-800 hover:text-green-600 cursor-pointer transition-colors">
                                 {item.nombre}
                               </h3>

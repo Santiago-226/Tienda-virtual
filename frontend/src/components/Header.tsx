@@ -24,9 +24,9 @@ const Header = () => {
 
   const menuItems = [
     { id: "/", label: "Inicio" },
-    { id: "/productos", label: "Productos" },
-    { id: "/servicios", label: "Servicios" },
-    { id: "/nosotros", label: "Nosotros" },
+    { id: "/products", label: "Productos" },
+    { id: "/categories", label: "Categorías" },
+    { id: "/about", label: "Nosotros" },
   ];
 
   // Función para actualizar el contador del carrito
@@ -95,14 +95,14 @@ const Header = () => {
     <header className="bg-gradient-to-r from-green-800 via-green-700 to-green-600 shadow-lg fixed w-full top-0 z-50 border-b border-green-700">
       <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center py-3">
-          {/* Logo empresarial */}
-          <div className="flex items-center space-x-2 sm:space-x-3 flex-1 min-w-0">
+          {/* Logo empresarial - A la izquierda */}
+          <div className="flex items-center space-x-2 sm:space-x-3 flex-shrink-0">
             <Link to="/" className="flex items-center space-x-2 sm:space-x-3">
               <div className="w-12 h-12 sm:w-16 sm:h-16 md:w-20 md:h-20 flex-shrink-0 backdrop-blur-sm p-1 sm:p-2">
                 <img src={LogoTienda} alt="Agro Tienda Logo" className="w-full h-full object-contain" />
               </div>
 
-              <div className="text-white min-w-0 flex-1">
+              <div className="text-white min-w-0 hidden sm:block">
                 <h1 className="text-base sm:text-lg md:text-xl font-bold leading-tight truncate">
                   Agro Tienda
                 </h1>
@@ -113,25 +113,27 @@ const Header = () => {
             </Link>
           </div>
 
-          {/* Menú Desktop */}
-          <ul className="hidden lg:flex space-x-8 mx-8">
-            {menuItems.map((item) => (
-              <li key={item.id}>
-                <Link
-                  to={item.id}
-                  className={`text-sm font-medium transition-all duration-300 px-3 py-2 rounded-lg whitespace-nowrap ${
-                    location.pathname === item.id
-                      ? "text-green-900 bg-white/90 backdrop-blur-sm shadow-sm"
-                      : "text-green-50 hover:text-white hover:bg-white/10"
-                  }`}
-                >
-                  {item.label}
-                </Link>
-              </li>
-            ))}
-          </ul>
+          {/* Menú Desktop - Centrado */}
+          <div className="hidden lg:flex justify-center flex-1">
+            <ul className="flex space-x-4 xl:space-x-8">
+              {menuItems.map((item) => (
+                <li key={item.id}>
+                  <Link
+                    to={item.id}
+                    className={`text-sm font-medium transition-all duration-300 px-3 py-2 rounded-lg whitespace-nowrap ${
+                      location.pathname === item.id
+                        ? "text-green-900 bg-white/90 backdrop-blur-sm shadow-sm"
+                        : "text-green-50 hover:text-white hover:bg-white/10"
+                    }`}
+                  >
+                    {item.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
 
-          {/* Iconos de acción - Siempre visibles */}
+          {/* Iconos de acción - A la derecha */}
           <div className="flex items-center space-x-2 sm:space-x-3 flex-shrink-0">
             {/* Carrito - Con funcionalidad completa */}
             <Link to="/carrito">

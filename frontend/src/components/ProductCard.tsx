@@ -23,6 +23,16 @@ interface ProductCardProps {
   viewMode?: "grid" | "list";
 }
 
+// Función para verificar si hay descuento
+const hasDiscount = (product: Product): boolean => {
+  return !!product.precioOriginal && product.precio < product.precioOriginal;
+};
+
+// Función para calcular el porcentaje de descuento
+const calculateDiscountPercentage = (precio: number, precioOriginal: number): number => {
+  return Math.round(((precioOriginal - precio) / precioOriginal) * 100);
+};
+
 // Componente de imagen optimizada
 const OptimizedImage: React.FC<{
   src: string;
@@ -167,25 +177,26 @@ export const ProductCard: React.FC<ProductCardProps> = ({
           className="w-full h-48 object-cover group-hover:scale-110 transition-transform duration-500"
           onLoad={() => setImageLoaded(true)}
         />
-        
         <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-
         {/* Badge de categoría */}
         <div className="absolute top-3 left-3">
           <span className="bg-green-600 text-white px-2 py-1 rounded-full text-xs font-medium">
-            {product.category}
+            {product.category ? product.category : "Sin categoría"}
           </span>
         </div>
-
-        {/* Descuento badge */}
-        {product.precioOriginal && (
-          <div className="absolute top-3 right-3">
+        {/* Descuento badge - SOLO si hay descuento real */}
+        {hasDiscount(product) && (
+          <div className="absolute top-12 left-3">
             <span className="bg-red-500 text-white px-2 py-1 rounded-full text-xs font-medium">
-              -{Math.round(((product.precioOriginal - product.precio) / product.precioOriginal) * 100)}%
+              -
+              {calculateDiscountPercentage(
+                product.precio,
+                product.precioOriginal!
+              )}
+              %
             </span>
           </div>
         )}
-
         {/* Botones de acción */}
         <div className="absolute top-3 right-3 flex flex-col space-y-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
           <Link to={`/products/${product.id}`}>
@@ -212,22 +223,21 @@ export const ProductCard: React.FC<ProductCardProps> = ({
         <StarRating rating={product.rating} size="sm" />
 
         <div className="flex flex-col justify-between gap-3 mt-4">
+          {/* Sección de precios: */}
           <div className="flex items-center gap-2">
             <div className="text-2xl font-bold text-green-600">
               {formatPrice(product.precio)}
             </div>
-            {product.precioOriginal && (
+            {hasDiscount(product) && (
               <div className="text-sm text-gray-500 line-through">
-                {formatPrice(product.precioOriginal)}
+                {formatPrice(product.precioOriginal!)}
               </div>
             )}
           </div>
-
           {/* Stock disponible */}
           <div className="text-xs text-gray-500">
             Stock: {product.stock || 10} unidades
           </div>
-
           <div className="flex justify-between gap-2">
             <Link to={`/products/${product.id}`} className="flex-1">
               <button className="cursor-pointer w-full bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-2 rounded-lg transition-colors flex items-center justify-center space-x-2">
@@ -269,12 +279,17 @@ export const ProductListItem: React.FC<ProductCardProps> = ({
           <div className="flex-1">
             <div className="flex items-center mb-2">
               <span className="bg-green-100 text-green-600 px-2 py-1 rounded-full text-xs font-medium mr-3">
-                {product.category}
+                {product.category ? product.category : "Sin categoría"}
               </span>
               <StarRating rating={product.rating} size="sm" />
-              {product.precioOriginal && (
+              {hasDiscount(product) && (
                 <span className="ml-2 bg-red-100 text-red-600 px-2 py-1 rounded-full text-xs">
-                  -{Math.round(((product.precioOriginal - product.precio) / product.precioOriginal) * 100)}% OFF
+                  -
+                  {calculateDiscountPercentage(
+                    product.precio,
+                    product.precioOriginal!
+                  )}
+                  % OFF
                 </span>
               )}
             </div>
@@ -284,21 +299,24 @@ export const ProductListItem: React.FC<ProductCardProps> = ({
               </h3>
             </Link>
             <p className="text-gray-600 line-clamp-2">
-              {product.descripcion || "Producto de alta calidad para agricultura profesional"}
+              {product.descripcion ||
+                "Producto de alta calidad para agricultura profesional"}
             </p>
             <div className="mt-2 text-sm text-gray-500">
-              Stock: {product.stock || 10} unidades • Marca: {product.marca || 'Genérico'}
+              Stock: {product.stock || 10} unidades • Marca:{" "}
+              {product.marca || "Genérico"}
             </div>
           </div>
-          
+
           <div className="flex flex-col items-end space-y-3">
+            {/* Sección de precios: */}
             <div className="flex items-center gap-2">
               <div className="text-2xl font-bold text-green-600">
                 {formatPrice(product.precio)}
               </div>
-              {product.precioOriginal && (
+              {hasDiscount(product) && (
                 <div className="text-sm text-gray-500 line-through">
-                  {formatPrice(product.precioOriginal)}
+                  {formatPrice(product.precioOriginal!)}
                 </div>
               )}
             </div>
@@ -310,7 +328,7 @@ export const ProductListItem: React.FC<ProductCardProps> = ({
                   <span>Ver más</span>
                 </button>
               </Link>
-              <button 
+              <button
                 onClick={() => onOpenModal(product)}
                 className="cursor-pointer bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center space-x-2"
               >

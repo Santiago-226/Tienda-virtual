@@ -13,9 +13,9 @@ import {
   Minus,
   Check,
   User,
-  CheckCircle
+  CheckCircle,
 } from "lucide-react";
-import { Link, useParams } from "react-router-dom"; // Añade esta importación
+import { Link, useParams, useNavigate } from "react-router-dom"; // Añade esta importación
 
 // Tipos de datos ampliados
 interface ProductDetail {
@@ -24,7 +24,7 @@ interface ProductDetail {
   precio: number;
   precioOriginal?: number;
   images: string[];
-  category: string;
+  categoryId: number;
   descripcion: string;
   caracteristicas: string[];
   especificaciones: { [key: string]: string };
@@ -60,7 +60,6 @@ interface CartItem {
   marca: string;
 }
 
-
 const ProductDetail = () => {
   const { id: productId } = useParams<{ id: string }>(); // Obtener el ID del producto desde la URL
   const [product, setProduct] = useState<ProductDetail | null>(null);
@@ -71,49 +70,59 @@ const ProductDetail = () => {
   const [activeTab, setActiveTab] = useState("descripcion");
   const [addingToCart, setAddingToCart] = useState(false);
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
+  const [categoryName, setCategoryName] = useState<string>(""); // 👈 guardamos nombre real de la categoría
+  const navigate = useNavigate(); // 👈 para el botón Volver
 
- useEffect(() => {
-  const fetchProductDetail = async () => {
-    if (!productId) {
-      setLoading(false);
-      return;
-    }
+  useEffect(() => {
+    const fetchProductDetail = async () => {
+      if (!productId) {
+        setLoading(false);
+        return;
+      }
 
-    setLoading(true);
-    try {
-      const [productResponse, reviewsResponse] = await Promise.all([
-        fetch(`${API_URL}/products/${productId}`), // Añade la URL completa
-        fetch(`${API_URL}/products/${productId}/reviews`),
-      ]);
+      setLoading(true);
+      try {
+        const [productResponse, reviewsResponse] = await Promise.all([
+          fetch(`${API_URL}/products/${productId}`), // Añade la URL completa
+          fetch(`${API_URL}/products/${productId}/reviews`),
+        ]);
 
-      if (!productResponse.ok) throw new Error('Error al cargar el producto');
-      if (!reviewsResponse.ok) throw new Error('Error al cargar las reseñas');
+        if (!productResponse.ok) throw new Error("Error al cargar el producto");
+        if (!reviewsResponse.ok) throw new Error("Error al cargar las reseñas");
 
-      const productData = await productResponse.json();
-      const reviewsData = await reviewsResponse.json();
+        const productData = await productResponse.json();
+        const reviewsData = await reviewsResponse.json();
 
-      setProduct(productData);
-      setReviews(reviewsData);
-    } catch (error) {
-      console.error("Error fetching product:", error);
-      setProduct(null); // Asegúrate de resetear el producto
-    } finally {
-      setLoading(false);
-    }
-  };
+        setProduct(productData);
+        setReviews(reviewsData);
 
-  fetchProductDetail();
-}, [productId]); // Añade productId como dependencia
+        // 👇 Obtener el nombre de la categoría desde el backend usando categoryId
+        if (productData.categoryId) {
+          const categoryRes = await fetch(
+            `${API_URL}/categories/${productData.categoryId}`
+          );
+          if (categoryRes.ok) {
+            const categoryData = await categoryRes.json();
+            setCategoryName(categoryData.nombre);
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching product:", error);
+        setProduct(null); // Asegúrate de resetear el producto
+      } finally {
+        setLoading(false);
+      }
+    };
 
+    fetchProductDetail();
+  }, [productId]); // Añade productId como dependencia
 
-
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat("es-CO", {
+  const formatPrice = (price: number) =>
+    new Intl.NumberFormat("es-CO", {
       style: "currency",
       currency: "COP",
       minimumFractionDigits: 0,
     }).format(price);
-  };
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("es-CO", {
@@ -151,11 +160,11 @@ const ProductDetail = () => {
     }
   };
 
-    const addToCart = async () => {
+  const addToCart = async () => {
     if (!product) return;
-    
+
     setAddingToCart(true);
-    
+
     try {
       const cartItem: CartItem = {
         id: product.id,
@@ -166,13 +175,15 @@ const ProductDetail = () => {
         quantity: quantity,
         stock: product.stock,
         category: product.category,
-        marca: product.marca
+        marca: product.marca,
       };
-      
+
       // Obtener carrito existente
-      const existingCart = JSON.parse(localStorage.getItem('cart') || '[]');
-      const existingItemIndex = existingCart.findIndex((item: CartItem) => item.id === product.id);
-      
+      const existingCart = JSON.parse(localStorage.getItem("cart") || "[]");
+      const existingItemIndex = existingCart.findIndex(
+        (item: CartItem) => item.id === product.id
+      );
+
       if (existingItemIndex >= 0) {
         // Si el producto ya existe, actualizar cantidad
         const newQuantity = existingCart[existingItemIndex].quantity + quantity;
@@ -185,19 +196,18 @@ const ProductDetail = () => {
         // Si es nuevo, agregarlo
         existingCart.push(cartItem);
       }
-      
+
       // Guardar en localStorage
-      localStorage.setItem('cart', JSON.stringify(existingCart));
-      
+      localStorage.setItem("cart", JSON.stringify(existingCart));
+
       // Mostrar mensaje de éxito
       setShowSuccessMessage(true);
       setTimeout(() => setShowSuccessMessage(false), 3000);
-      
+
       // Resetear cantidad a 1
       setQuantity(1);
-      
     } catch (error) {
-      console.error('Error adding to cart:', error);
+      console.error("Error adding to cart:", error);
       // Aquí podrías mostrar un mensaje de error
     } finally {
       setAddingToCart(false);
@@ -205,13 +215,16 @@ const ProductDetail = () => {
   };
 
   const getCartItemCount = () => {
-    const cart = JSON.parse(localStorage.getItem('cart') || '[]');
-    return cart.reduce((total: number, item: CartItem) => total + item.quantity, 0);
+    const cart = JSON.parse(localStorage.getItem("cart") || "[]");
+    return cart.reduce(
+      (total: number, item: CartItem) => total + item.quantity,
+      0
+    );
   };
 
   const getProductCartQuantity = () => {
     if (!product) return 0;
-    const cart = JSON.parse(localStorage.getItem('cart') || '[]');
+    const cart = JSON.parse(localStorage.getItem("cart") || "[]");
     const cartItem = cart.find((item: CartItem) => item.id === product.id);
     return cartItem ? cartItem.quantity : 0;
   };
@@ -243,28 +256,32 @@ const ProductDetail = () => {
     );
   }
 
-  const discount = product.precioOriginal
-    ? Math.round(
-        ((product.precioOriginal - product.precio) / product.precioOriginal) *
-          100
-      )
-    : 0;
+  const discount =
+    product?.precioOriginal && product.precioOriginal > product.precio
+      ? Math.round(
+          ((product.precioOriginal - product.precio) / product.precioOriginal) *
+            100
+        )
+      : 0;
 
   return (
     <div className="min-h-screen bg-gray-50 pt-20">
       <div className="max-w-7xl mx-auto px-4 py-8">
         {/* Breadcrumb */}
         <div className="flex items-center space-x-2 text-sm text-gray-600 mb-8">
-          <Link to={`/productos`}>
-            <button className="cursor-pointer flex items-center space-x-1 hover:text-green-600 transition-colors">
-              <ArrowLeft className="h-4 w-4" />
-              <span>Volver a productos</span>
-            </button>
+          <button
+            onClick={() => navigate(-1)}
+            className="cursor-pointer flex items-center space-x-1 hover:text-green-600 transition-colors"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            <span>Volver</span>
+          </button>
+          <span className="text-gray-400">/</span>
+          <Link to={`/categories/${product.categoryId}`}>
+            <span className="text-gray-600 hover:text-green-600">{categoryName}</span>
           </Link>
-          <span>/</span>
-          <span>{product.category}</span>
-          <span>/</span>
-          <span className="text-gray-800 font-medium">{product.nombre}</span>
+          <span className="text-gray-400">/</span>
+          <span className="text-gray-600">{product.nombre}</span>
         </div>
 
         <div className="grid lg:grid-cols-2 gap-12 mb-12">
@@ -334,7 +351,7 @@ const ProductDetail = () => {
             <div>
               <div className="flex items-center space-x-2 mb-2">
                 <span className="bg-green-100 text-green-600 px-3 py-1 rounded-full text-sm font-medium">
-                  {product.category}
+                  {categoryName ? categoryName : "Sin categoría"}
                 </span>
                 <span className="bg-gray-100 text-gray-600 px-3 py-1 rounded-full text-sm">
                   SKU: {product.sku}
@@ -370,11 +387,12 @@ const ProductDetail = () => {
                 <div className="text-4xl font-bold text-green-600">
                   {formatPrice(product.precio)}
                 </div>
-                {product.precioOriginal && (
-                  <div className="text-xl text-gray-500 line-through">
-                    {formatPrice(product.precioOriginal)}
-                  </div>
-                )}
+                {product.precioOriginal &&
+                  product.precioOriginal > product.precio && (
+                    <div className="text-xl text-gray-500 line-through">
+                      {formatPrice(product.precioOriginal)}
+                    </div>
+                  )}
               </div>
 
               <div className="text-sm text-gray-600 mb-6">
@@ -413,61 +431,64 @@ const ProductDetail = () => {
               </div>
 
               {/* Botones de acción */}
-  <div className="space-y-3">
-    {/* Mensaje de éxito */}
-    {showSuccessMessage && (
-      <div className="bg-green-50 border border-green-200 rounded-xl p-4 flex items-center space-x-3">
-        <CheckCircle className="h-5 w-5 text-green-600 flex-shrink-0" />
-        <div className="flex-1">
-          <p className="text-green-700 font-medium">¡Producto agregado al carrito!</p>
-          <p className="text-green-600 text-sm">
-            {getProductCartQuantity()} unidad(es) de {product.nombre} en tu carrito
-          </p>
-        </div>
-        <Link to="/carrito">
-          <button className="text-green-600 cursor-pointer hover:text-green-700 font-medium text-sm underline">
-            Ver carrito
-          </button>
-        </Link>
-      </div>
-    )}
+              <div className="space-y-3">
+                {/* Mensaje de éxito */}
+                {showSuccessMessage && (
+                  <div className="bg-green-50 border border-green-200 rounded-xl p-4 flex items-center space-x-3">
+                    <CheckCircle className="h-5 w-5 text-green-600 flex-shrink-0" />
+                    <div className="flex-1">
+                      <p className="text-green-700 font-medium">
+                        ¡Producto agregado al carrito!
+                      </p>
+                      <p className="text-green-600 text-sm">
+                        {getProductCartQuantity()} unidad(es) de{" "}
+                        {product.nombre} en tu carrito
+                      </p>
+                    </div>
+                    <Link to="/carrito">
+                      <button className="text-green-600 cursor-pointer hover:text-green-700 font-medium text-sm underline">
+                        Ver carrito
+                      </button>
+                    </Link>
+                  </div>
+                )}
 
-    {/* Información del carrito actual */}
-    {getProductCartQuantity() > 0 && !showSuccessMessage && (
-      <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
-        <p className="text-blue-700 text-sm">
-          Ya tienes {getProductCartQuantity()} unidad(es) de este producto en tu carrito
-        </p>
-      </div>
-    )}
+                {/* Información del carrito actual */}
+                {getProductCartQuantity() > 0 && !showSuccessMessage && (
+                  <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+                    <p className="text-blue-700 text-sm">
+                      Ya tienes {getProductCartQuantity()} unidad(es) de este
+                      producto en tu carrito
+                    </p>
+                  </div>
+                )}
 
-    {/* Botón principal */}
-    <button 
-      onClick={addToCart}
-      disabled={addingToCart || product.stock === 0}
-      className="cursor-pointer w-full bg-green-600 hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white py-4 px-6 rounded-xl font-bold transition-colors flex items-center justify-center space-x-2 shadow-lg hover:shadow-xl"
-    >
-      <ShoppingCart className="h-5 w-5" />
-      <span>
-        {addingToCart 
-          ? "Agregando..." 
-          : product.stock === 0 
-            ? "Sin stock" 
-            : "Agregar al Carrito"
-        }
-      </span>
-    </button>
+                {/* Botón principal */}
+                <button
+                  onClick={addToCart}
+                  disabled={addingToCart || product.stock === 0}
+                  className="cursor-pointer w-full bg-green-600 hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white py-4 px-6 rounded-xl font-bold transition-colors flex items-center justify-center space-x-2 shadow-lg hover:shadow-xl"
+                >
+                  <ShoppingCart className="h-5 w-5" />
+                  <span>
+                    {addingToCart
+                      ? "Agregando..."
+                      : product.stock === 0
+                      ? "Sin stock"
+                      : "Agregar al Carrito"}
+                  </span>
+                </button>
 
-    {/* Botón secundario para ir al carrito */}
-    {getCartItemCount() > 0 && (
-      <Link to="/carrito">
-        <button className="cursor-pointer w-full border-2 border-green-600 text-green-600 hover:bg-green-50 py-4 px-6 rounded-xl font-bold transition-colors flex items-center justify-center space-x-2">
-          <ShoppingCart className="h-5 w-5" />
-          <span>Ver Carrito ({getCartItemCount()})</span>
-        </button>
-      </Link>
-    )}
-  </div>
+                {/* Botón secundario para ir al carrito */}
+                {getCartItemCount() > 0 && (
+                  <Link to="/carrito">
+                    <button className="cursor-pointer w-full border-2 border-green-600 text-green-600 hover:bg-green-50 py-4 px-6 rounded-xl font-bold transition-colors flex items-center justify-center space-x-2">
+                      <ShoppingCart className="h-5 w-5" />
+                      <span>Ver Carrito ({getCartItemCount()})</span>
+                    </button>
+                  </Link>
+                )}
+              </div>
             </div>
 
             {/* Información adicional */}

@@ -102,13 +102,23 @@ const ProductCarousel = () => {
     });
   };
 
+  useEffect(() => {
+  if (products.length > itemsPerView) {
+    const interval = setInterval(() => {
+      nextSlide();
+    }, 3000); // cambia cada 3 segundos
+
+    return () => clearInterval(interval); // limpiar intervalo
+  }
+}, [products, itemsPerView]);
+
   // Calcular el ancho de cada slide
-  const getSlideWidth = () => {
+  function getSlideWidth() {
     if (carouselRef.current) {
       return carouselRef.current.offsetWidth / itemsPerView;
     }
     return 0;
-  };
+  }
 
   if (loading) {
     return (

@@ -107,6 +107,15 @@ const DiscountProductCarousel = () => {
       return prevIndex === 0 ? maxIndex : prevIndex - 1;
     });
   };
+  useEffect(() => {
+  if (products.length > itemsPerView) {
+    const interval = setInterval(() => {
+      nextSlide();
+    }, 3000); // cambia cada 3 segundos
+
+    return () => clearInterval(interval); // limpiar intervalo
+  }
+}, [products, itemsPerView]);
 
   // Calcular el ancho de cada slide
   const getSlideWidth = () => {

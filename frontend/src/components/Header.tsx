@@ -139,7 +139,7 @@ const Header = () => {
             {/* Carrito - Con funcionalidad completa */}
             <Link to="/carrito">
               <div className="relative group">
-                <button className="relative text-green-100 hover:text-white transition-colors p-2 rounded-lg hover:bg-white/10 flex-shrink-0">
+                <button className="cursor-pointer relative text-green-100 hover:text-white transition-colors p-2 rounded-lg hover:bg-white/10 flex-shrink-0">
                   <ShoppingCart className="h-5 w-5 sm:h-6 sm:w-6" />
                   
                   {/* Contador del carrito */}

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Menu, X, ShoppingCart, Phone } from "lucide-react";
 import LogoTienda from "../assets/images/Icon.svg";
 import { Link, useLocation } from "react-router-dom";
+import { brandConfig } from "../utils/brandConfig";
 
 // Interfaz para los items del carrito
 interface CartItem {
@@ -104,10 +105,10 @@ const Header = () => {
 
               <div className="text-white min-w-0 hidden sm:block">
                 <h1 className="text-base sm:text-lg md:text-xl font-bold leading-tight truncate">
-                  Agro Tienda
+                  {brandConfig.name}
                 </h1>
                 <p className="text-[10px] sm:text-xs text-green-100 leading-tight truncate">
-                  Tu aliado en cada siembra
+                  {brandConfig.slogan}
                 </p>
               </div>
             </Link>

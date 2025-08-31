@@ -12,6 +12,8 @@ import {
   Shield,
   Clock,
 } from "lucide-react";
+import { brandConfig } from "../utils/brandConfig";
+import Logo from "../assets/images/Icon.svg";
 
 const Footer = () => {
   return (
@@ -22,35 +24,37 @@ const Footer = () => {
           {/* Columna 1: Información de la empresa */}
           <div className="space-y-6">
             <div className="flex items-center">
-              <Leaf className="h-8 w-8 text-green-500 mr-3" />
+              <img src={Logo} alt="AgroTienda Logo" className="h-8 w-8 text-green-500 mr-3" />
               <span className="text-2xl font-bold">AgroTienda</span>
             </div>
             <p className="text-gray-400 leading-relaxed">
-              Proveedores líderes de productos agrícolas de alta calidad en
-              Colombia. Ofrecemos semillas certificadas, fertilizantes orgánicos
-              y herramientas profesionales.
+              {brandConfig.company.description}
             </p>
             <div className="flex space-x-4 pt-2">
               <a
-                href="#"
+                href={brandConfig.social.facebook}
+                target="_blank"
                 className="text-gray-400 hover:text-green-500 transition-colors"
               >
                 <Facebook className="h-6 w-6" />
               </a>
               <a
-                href="#"
+                href={brandConfig.social.instagram}
+                target="_blank"
                 className="text-gray-400 hover:text-green-500 transition-colors"
               >
                 <Instagram className="h-6 w-6" />
               </a>
               <a
-                href="#"
+                href={brandConfig.social.twitter}
+                target="_blank"
                 className="text-gray-400 hover:text-green-500 transition-colors"
               >
                 <Twitter className="h-6 w-6" />
               </a>
               <a
-                href="#"
+                href={brandConfig.social.youtube}
+                target="_blank"
                 className="text-gray-400 hover:text-green-500 transition-colors"
               >
                 <Youtube className="h-6 w-6" />
@@ -65,23 +69,23 @@ const Footer = () => {
               <li className="flex items-start">
                 <MapPin className="h-5 w-5 text-green-500 mr-3 mt-1 flex-shrink-0" />
                 <span className="text-gray-400">
-                  Carrera 45 # 20-10, Bogotá, Colombia
+                  {brandConfig.contact.address}, {brandConfig.contact.city}, {brandConfig.contact.departamento}, {brandConfig.contact.pais}
                 </span>
               </li>
               <li className="flex items-start">
                 <Phone className="h-5 w-5 text-green-500 mr-3 mt-1 flex-shrink-0" />
-                <span className="text-gray-400">+57 1 234 5678</span>
+                <span className="text-gray-400">{brandConfig.contact.phone}</span>
               </li>
               <li className="flex items-start">
                 <Mail className="h-5 w-5 text-green-500 mr-3 mt-1 flex-shrink-0" />
-                <span className="text-gray-400">info@agrotienda.com</span>
+                <span className="text-gray-400">{brandConfig.contact.email}</span>
               </li>
               <li className="flex items-start">
                 <Clock className="h-5 w-5 text-green-500 mr-3 mt-1 flex-shrink-0" />
                 <span className="text-gray-400">
-                  Lun-Vie: 8:00 AM - 6:00 PM
+                  {brandConfig.contact.horario.lunes}
                   <br />
-                  Sáb: 9:00 AM - 2:00 PM
+                  {brandConfig.contact.horario.sabado}
                 </span>
               </li>
             </ul>

@@ -140,18 +140,6 @@ const productSchema = new mongoose.Schema({
     }
   },
   
-  // Imágenes del producto (múltiples)
-  image: {
-    type: String,
-    required: [true, 'La imagen principal es obligatoria'],
-    validate: {
-      validator: function(v) {
-        return /^https?:\/\/.+\.(jpg|jpeg|png|gif|webp)(\?.*)?$/i.test(v);
-      },
-      message: 'Debe ser una URL válida de imagen'
-    }
-  },
-  
   images: [{
     type: String,
     validate: {
@@ -253,11 +241,6 @@ const productSchema = new mongoose.Schema({
   }],
   
   // Métricas de negocio
-  viewCount: {
-    type: Number,
-    default: 0,
-    min: [0, 'Las vistas no pueden ser negativas']
-  },
   
   salesCount: {
     type: Number,
@@ -405,7 +388,6 @@ module.exports = mongoose.model('Product', productSchema);
 - `tags` - Etiquetas para búsquedas
 
 **📊 MÉTRICAS DE NEGOCIO:**
-- `viewCount` - Número de vistas del producto
 - `salesCount` - Número de ventas realizadas
 - `isActive` - Control de visibilidad
 

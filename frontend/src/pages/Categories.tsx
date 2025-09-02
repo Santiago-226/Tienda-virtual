@@ -5,8 +5,9 @@ import API_URL from "../config/api.config";
 
 // Tipos de datos
 interface Category {
-  id: number;
+  _id: string;
   nombre: string;
+  slug: string;
   image: string;
   descripcion?: string;
   productCount?: number;
@@ -212,8 +213,8 @@ const Categories = () => {
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                 {currentItems.map((category) => (
                   <Link 
-                    key={category.id}
-                    to={`/categories/${category.id}`}
+                    key={category._id}
+                    to={`/categories/${category.slug}`}
                     className="group"
                   >
                     <div className="bg-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100 h-full">
@@ -230,11 +231,6 @@ const Categories = () => {
                             <h3 className="text-lg font-bold text-white mb-1 group-hover:text-green-300 transition-colors">
                               {category.nombre}
                             </h3>
-                            {category.productCount && (
-                              <p className="text-white/90 text-sm">
-                                {category.productCount} productos
-                              </p>
-                            )}
                           </div>
                         </div>
 
@@ -263,8 +259,8 @@ const Categories = () => {
               <div className="space-y-4">
                 {currentItems.map((category) => (
                   <Link 
-                    key={category.id}
-                    to={`/categories/${category.id}`}
+                    key={category.nombre}
+                    to={`/categories/${category.nombre}`}
                     className="group"
                   >
                     <div className="bg-white rounded-lg shadow-sm hover:shadow-md transition-all duration-300 border border-gray-200 overflow-hidden">

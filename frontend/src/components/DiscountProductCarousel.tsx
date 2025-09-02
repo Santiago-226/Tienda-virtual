@@ -4,17 +4,26 @@ import { Link } from 'react-router-dom';
 import API_URL from "../config/api.config";
 
 // Tipos de datos
+interface Category {
+  _id: string;
+  nombre: string;
+  slug: string;
+  url: string;
+}
+
 interface Product {
-  id: number;
+  _id: string;
+  id: string;
   nombre: string;
   precio: number;
   images: string[];
-  category: string;
+  categoryId: Category;
   descripcion?: string;
   stock?: number;
   marca?: string;
   precioOriginal?: number;
   rating?: number;
+  slug?: string;
 }
 
 const DiscountProductCarousel = () => {
@@ -59,8 +68,11 @@ const DiscountProductCarousel = () => {
         const response = await fetch(`${API_URL}/products`);
         const data = await response.json();
         
+        // La respuesta ahora tiene estructura { products: [], pagination: {} }
+        const productsData = data.products || data;
+        
         // Filtrar productos que tienen precio original (descuento) y ordenar por porcentaje de descuento
-        const productsWithDiscount = data.filter((product: Product) => 
+        const productsWithDiscount = productsData.filter((product: Product) => 
           product.precioOriginal && product.precioOriginal > product.precio
         );
         
@@ -107,15 +119,16 @@ const DiscountProductCarousel = () => {
       return prevIndex === 0 ? maxIndex : prevIndex - 1;
     });
   };
-  useEffect(() => {
-  if (products.length > itemsPerView) {
-    const interval = setInterval(() => {
-      nextSlide();
-    }, 3000); // cambia cada 3 segundos
 
-    return () => clearInterval(interval); // limpiar intervalo
-  }
-}, [products, itemsPerView]);
+  useEffect(() => {
+    if (products.length > itemsPerView) {
+      const interval = setInterval(() => {
+        nextSlide();
+      }, 3000); // cambia cada 3 segundos
+
+      return () => clearInterval(interval); // limpiar intervalo
+    }
+  }, [products, itemsPerView]);
 
   // Calcular el ancho de cada slide
   const getSlideWidth = () => {
@@ -199,11 +212,11 @@ const DiscountProductCarousel = () => {
                 
                 return (
                   <div
-                    key={product.id}
+                    key={product._id}
                     className="px-2 sm:px-3"
                     style={{ width: `${100 / itemsPerView}%` }}
                   >
-                    <Link to={`/products/${product.id}`}>
+                    <Link to={`/products/${product._id}`}>
                       <div className="bg-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 group overflow-hidden border border-gray-100 cursor-pointer h-full flex flex-col relative">
                         <div className="relative overflow-hidden flex-grow">
                           <img

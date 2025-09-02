@@ -15,16 +15,24 @@ import {
   User,
   CheckCircle,
 } from "lucide-react";
-import { Link, useParams, useNavigate } from "react-router-dom"; // Añade esta importación
+import { Link, useParams, useNavigate } from "react-router-dom";
 
 // Tipos de datos ampliados
+interface Category {
+  _id: string;
+  nombre: string;
+  slug: string;
+  url: string;
+}
+
 interface ProductDetail {
-  id: number;
+  _id: string;
+  id: string;
   nombre: string;
   precio: number;
   precioOriginal?: number;
   images: string[];
-  categoryId: number;
+  categoryId: Category;
   descripcion: string;
   caracteristicas: string[];
   especificaciones: { [key: string]: string };
@@ -49,7 +57,8 @@ interface Review {
 }
 
 interface CartItem {
-  id: number;
+  _id: string;
+  id: string;
   nombre: string;
   precio: number;
   precioOriginal?: number;
@@ -61,7 +70,7 @@ interface CartItem {
 }
 
 const ProductDetail = () => {
-  const { id: productId } = useParams<{ id: string }>(); // Obtener el ID del producto desde la URL
+  const { id: productId } = useParams<{ id: string }>();
   const [product, setProduct] = useState<ProductDetail | null>(null);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
@@ -70,52 +79,63 @@ const ProductDetail = () => {
   const [activeTab, setActiveTab] = useState("descripcion");
   const [addingToCart, setAddingToCart] = useState(false);
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
-  const [categoryName, setCategoryName] = useState<string>(""); // 👈 guardamos nombre real de la categoría
-  const navigate = useNavigate(); // 👈 para el botón Volver
+  const [categoryName, setCategoryName] = useState<string>("");
+  const navigate = useNavigate();
 
-  useEffect(() => {
-    const fetchProductDetail = async () => {
-      if (!productId) {
-        setLoading(false);
-        return;
+useEffect(() => {
+  const fetchProductDetail = async () => {
+    if (!productId) {
+      setLoading(false);
+      return;
+    }
+
+    setLoading(true);
+    try {
+      // Primero obtener el producto
+      const productResponse = await fetch(`${API_URL}/products/${productId}`);
+      
+      if (!productResponse.ok) {
+        throw new Error("Error al cargar el producto");
       }
 
-      setLoading(true);
+      const productData = await productResponse.json();
+      setProduct(productData);
+
+      // Setear el nombre de la categoría desde el objeto categoryId
+      if (productData.categoryId && productData.categoryId.nombre) {
+        setCategoryName(productData.categoryId.nombre);
+      }
+
+      // Luego intentar obtener las reviews (manejando posibles errores)
       try {
-        const [productResponse, reviewsResponse] = await Promise.all([
-          fetch(`${API_URL}/products/${productId}`), // Añade la URL completa
-          fetch(`${API_URL}/products/${productId}/reviews`),
-        ]);
-
-        if (!productResponse.ok) throw new Error("Error al cargar el producto");
-        if (!reviewsResponse.ok) throw new Error("Error al cargar las reseñas");
-
-        const productData = await productResponse.json();
-        const reviewsData = await reviewsResponse.json();
-
-        setProduct(productData);
-        setReviews(reviewsData);
-
-        // 👇 Obtener el nombre de la categoría desde el backend usando categoryId
-        if (productData.categoryId) {
-          const categoryRes = await fetch(
-            `${API_URL}/categories/${productData.categoryId}`
-          );
-          if (categoryRes.ok) {
-            const categoryData = await categoryRes.json();
-            setCategoryName(categoryData.nombre);
-          }
+        const reviewsResponse = await fetch(`${API_URL}/products/${productId}/reviews`);
+        
+        if (reviewsResponse.ok) {
+          const reviewsData = await reviewsResponse.json();
+          setReviews(reviewsData);
+        } else if (reviewsResponse.status === 404) {
+          // Endpoint de reviews no existe o no hay reviews
+          console.log("No se encontraron reviews para este producto");
+          setReviews([]);
+        } else {
+          console.warn("Error al cargar reviews:", reviewsResponse.status);
+          setReviews([]);
         }
-      } catch (error) {
-        console.error("Error fetching product:", error);
-        setProduct(null); // Asegúrate de resetear el producto
-      } finally {
-        setLoading(false);
+      } catch (reviewsError) {
+        console.warn("Error al cargar reviews:", reviewsError);
+        setReviews([]); // Asegurar que reviews sea un array vacío
       }
-    };
 
-    fetchProductDetail();
-  }, [productId]); // Añade productId como dependencia
+    } catch (error) {
+      console.error("Error fetching product:", error);
+      setProduct(null);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  fetchProductDetail();
+}, [productId]);
 
   const formatPrice = (price: number) =>
     new Intl.NumberFormat("es-CO", {
@@ -167,6 +187,7 @@ const ProductDetail = () => {
 
     try {
       const cartItem: CartItem = {
+        _id: product._id,
         id: product.id,
         nombre: product.nombre,
         precio: product.precio,
@@ -174,14 +195,14 @@ const ProductDetail = () => {
         image: product.images[0],
         quantity: quantity,
         stock: product.stock,
-        category: product.category,
+        category: product.categoryId.nombre,
         marca: product.marca,
       };
 
       // Obtener carrito existente
       const existingCart = JSON.parse(localStorage.getItem("cart") || "[]");
       const existingItemIndex = existingCart.findIndex(
-        (item: CartItem) => item.id === product.id
+        (item: CartItem) => item._id === product._id
       );
 
       if (existingItemIndex >= 0) {
@@ -208,7 +229,6 @@ const ProductDetail = () => {
       setQuantity(1);
     } catch (error) {
       console.error("Error adding to cart:", error);
-      // Aquí podrías mostrar un mensaje de error
     } finally {
       setAddingToCart(false);
     }
@@ -225,7 +245,7 @@ const ProductDetail = () => {
   const getProductCartQuantity = () => {
     if (!product) return 0;
     const cart = JSON.parse(localStorage.getItem("cart") || "[]");
-    const cartItem = cart.find((item: CartItem) => item.id === product.id);
+    const cartItem = cart.find((item: CartItem) => item._id === product._id);
     return cartItem ? cartItem.quantity : 0;
   };
 
@@ -277,8 +297,10 @@ const ProductDetail = () => {
             <span>Volver</span>
           </button>
           <span className="text-gray-400">/</span>
-          <Link to={`/categories/${product.categoryId}`}>
-            <span className="text-gray-600 hover:text-green-600">{categoryName}</span>
+          <Link to={`/categories/${product.categoryId._id}`}>
+            <span className="text-gray-600 hover:text-green-600">
+              {categoryName || product.categoryId.nombre}
+            </span>
           </Link>
           <span className="text-gray-400">/</span>
           <span className="text-gray-600">{product.nombre}</span>
@@ -351,7 +373,7 @@ const ProductDetail = () => {
             <div>
               <div className="flex items-center space-x-2 mb-2">
                 <span className="bg-green-100 text-green-600 px-3 py-1 rounded-full text-sm font-medium">
-                  {categoryName ? categoryName : "Sin categoría"}
+                  {categoryName || product.categoryId.nombre}
                 </span>
                 <span className="bg-gray-100 text-gray-600 px-3 py-1 rounded-full text-sm">
                   SKU: {product.sku}
@@ -513,25 +535,29 @@ const ProductDetail = () => {
         <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
           {/* Tab headers */}
           <div className="flex border-b border-gray-200 overflow-x-auto">
-            {[
-              { id: "descripcion", label: "Descripción" },
-              { id: "especificaciones", label: "Especificaciones" },
-              { id: "caracteristicas", label: "Características" },
-              { id: "incluye", label: "Qué incluye" },
-              { id: "reseñas", label: `Reseñas (${reviews.length})` },
-            ].map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`px-6 py-4 font-medium text-sm whitespace-nowrap transition-colors ${
-                  activeTab === tab.id
-                    ? "text-green-600 border-b-2 border-green-600"
-                    : "text-gray-600 hover:text-gray-800"
-                }`}
-              >
-                {tab.label}
-              </button>
-            ))}
+            
+{[
+  { id: "descripcion", label: "Descripción" },
+  { id: "especificaciones", label: "Especificaciones" },
+  { id: "caracteristicas", label: "Características" },
+  { id: "incluye", label: "Qué incluye" },
+  { 
+    id: "reseñas", 
+    label: `Reseñas ${reviews.length > 0 ? `(${reviews.length})` : ''}`
+  },
+].map((tab) => (
+  <button
+    key={tab.id}
+    onClick={() => setActiveTab(tab.id)}
+    className={`px-6 py-4 font-medium text-sm whitespace-nowrap transition-colors ${
+      activeTab === tab.id
+        ? "text-green-600 border-b-2 border-green-600"
+        : "text-gray-600 hover:text-gray-800"
+    }`}
+  >
+    {tab.label}
+  </button>
+))}
           </div>
 
           {/* Tab content */}
@@ -583,53 +609,72 @@ const ProductDetail = () => {
             )}
 
             {activeTab === "reseñas" && (
-              <div className="space-y-6">
-                {reviews.map((review) => (
-                  <div
-                    key={review.id}
-                    className="border-b border-gray-100 pb-6 last:border-b-0"
-                  >
-                    <div className="flex items-start justify-between mb-3">
-                      <div className="flex items-center space-x-3">
-                        <div className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center">
-                          <User className="h-6 w-6 text-gray-400" />
-                        </div>
-                        <div>
-                          <div className="flex items-center space-x-2">
-                            <span className="font-medium text-gray-800">
-                              {review.usuario}
-                            </span>
-                            {review.verificado && (
-                              <span className="bg-green-100 text-green-600 px-2 py-0.5 rounded-full text-xs font-medium">
-                                Verificado
-                              </span>
-                            )}
-                          </div>
-                          <div className="flex items-center space-x-2 mt-1">
-                            <div className="flex text-yellow-400 text-sm">
-                              {[...Array(5)].map((_, i) => (
-                                <Star
-                                  key={i}
-                                  className={`h-4 w-4 ${
-                                    i < review.rating ? "fill-current" : ""
-                                  }`}
-                                />
-                              ))}
-                            </div>
-                            <span className="text-gray-500 text-sm">
-                              {formatDate(review.fecha)}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    <p className="text-gray-700 leading-relaxed">
-                      {review.comentario}
-                    </p>
-                  </div>
-                ))}
+  <div className="space-y-6">
+    {reviews.length === 0 ? (
+      // Estado vacío cuando no hay reviews
+      <div className="text-center py-12">
+        <div className="bg-gray-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+          <Star className="h-8 w-8 text-gray-400" />
+        </div>
+        <h3 className="text-lg font-medium text-gray-800 mb-2">
+          Aún no hay reseñas
+        </h3>
+        <p className="text-gray-600 mb-6">
+          Sé el primero en compartir tu experiencia con este producto
+        </p>
+        <button className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg transition-colors">
+          Escribir reseña
+        </button>
+      </div>
+    ) : (
+      // Lista de reviews cuando sí hay
+      reviews.map((review) => (
+        <div
+          key={review.id}
+          className="border-b border-gray-100 pb-6 last:border-b-0"
+        >
+          <div className="flex items-start justify-between mb-3">
+            <div className="flex items-center space-x-3">
+              <div className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center">
+                <User className="h-6 w-6 text-gray-400" />
               </div>
-            )}
+              <div>
+                <div className="flex items-center space-x-2">
+                  <span className="font-medium text-gray-800">
+                    {review.usuario}
+                  </span>
+                  {review.verificado && (
+                    <span className="bg-green-100 text-green-600 px-2 py-0.5 rounded-full text-xs font-medium">
+                      Verificado
+                    </span>
+                  )}
+                </div>
+                <div className="flex items-center space-x-2 mt-1">
+                  <div className="flex text-yellow-400 text-sm">
+                    {[...Array(5)].map((_, i) => (
+                      <Star
+                        key={i}
+                        className={`h-4 w-4 ${
+                          i < review.rating ? "fill-current" : ""
+                        }`}
+                      />
+                    ))}
+                  </div>
+                  <span className="text-gray-500 text-sm">
+                    {formatDate(review.fecha)}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <p className="text-gray-700 leading-relaxed">
+            {review.comentario}
+          </p>
+        </div>
+      ))
+    )}
+  </div>
+)}
           </div>
         </div>
       </div>

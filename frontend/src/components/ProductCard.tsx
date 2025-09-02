@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 
 // Tipos de datos
 interface Product {
-  id: number;
+  _id: string;
   nombre: string;
   precio: number;
   images: string[];

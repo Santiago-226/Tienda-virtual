@@ -5,17 +5,18 @@ import  API_URL  from '../config/api.config';
 
 // Tipos de datos actualizados
 interface Category {
-  id: number;
+  _id: string;
   nombre: string;
 }
 
 // Tipos de datos
 interface Product {
-  id: number;
+  _id: string;
+  id: string; // Mantener id si es necesario en otros lugares
   nombre: string;
   precio: number;
   images: string[];
-  category: string;
+  categoryId: Category;
   descripcion?: string;
   stock?: number;
   marca?: string;
@@ -24,7 +25,8 @@ interface Product {
 }
 
 interface CartItem {
-  id: number;
+  _id: string;
+  id: string;
   nombre: string;
   precio: number;
   precioOriginal?: number;
@@ -166,47 +168,54 @@ const Products = () => {
     return Math.round(((product.precioOriginal - product.precio) / product.precioOriginal) * 100);
   }, []);
 
-    // Fetch de productos y categorías
-  useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
-      try {
-        // Obtener productos
-        const productsResponse = await fetch(`${API_URL}/products`);
-        if (!productsResponse.ok) {
-          throw new Error(`Error ${productsResponse.status}: ${productsResponse.statusText}`);
-        }
-        const productsData = await productsResponse.json();
-        setProducts(productsData);
-        setFilteredProducts(productsData);
-
-        // Obtener categorías (opcional, si necesitas la lista completa)
-        const categoriesResponse = await fetch(`${API_URL}/categories`);
-        if (categoriesResponse.ok) {
-          const categoriesData = await categoriesResponse.json();
-          setCategories(categoriesData);
-        }
-        
-      } catch (error) {
-        console.error('Error fetching data:', error);
-      } finally {
-        setLoading(false);
+// Fetch de productos y categorías
+useEffect(() => {
+  const fetchData = async () => {
+    setLoading(true);
+    try {
+      // Obtener productos
+      const productsResponse = await fetch(`${API_URL}/products`);
+      if (!productsResponse.ok) {
+        throw new Error(`Error ${productsResponse.status}: ${productsResponse.statusText}`);
       }
-    };
+      const productsData = await productsResponse.json();
+      
+      // La respuesta ahora tiene una estructura { products: [], pagination: {} }
+      setProducts(productsData.products || productsData); // Manejar ambos formatos
+      setFilteredProducts(productsData.products || productsData);
 
-    fetchData();
-  }, []);
+      // Obtener categorías
+      const categoriesResponse = await fetch(`${API_URL}/categories`);
+      if (categoriesResponse.ok) {
+        const categoriesData = await categoriesResponse.json();
+        setCategories(categoriesData);
+      }
+      
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  fetchData();
+}, []);
 
 
   // Filtrar y ordenar productos
-  useEffect(() => {
-    let filtered = products.filter(product => {
-      const matchesSearch = product.nombre.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchesCategory = selectedCategory === "Todos" || product.category === selectedCategory;
-      const matchesPrice = product.precio >= priceRange.min && product.precio <= priceRange.max;
-      
-      return matchesSearch && matchesCategory && matchesPrice;
-    });
+// Filtrar y ordenar productos
+useEffect(() => {
+  let filtered = products.filter(product => {
+    const matchesSearch = product.nombre.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    // Cambiar esta línea para usar categoryId.nombre
+    const matchesCategory = selectedCategory === "Todos" || 
+                           (product.categoryId && product.categoryId.nombre === selectedCategory);
+    
+    const matchesPrice = product.precio >= priceRange.min && product.precio <= priceRange.max;
+    
+    return matchesSearch && matchesCategory && matchesPrice;
+  });
 
     // Ordenar productos
     filtered.sort((a, b) => {
@@ -289,6 +298,7 @@ const Products = () => {
     
     try {
       const cartItem: CartItem = {
+        _id: selectedProduct._id,
         id: selectedProduct.id,
         nombre: selectedProduct.nombre,
         precio: selectedProduct.precio,
@@ -296,15 +306,15 @@ const Products = () => {
         image: selectedProduct.images[0],
         quantity: quantity,
         stock: selectedProduct.stock || 10,
-        category: selectedProduct.category,
+        category: selectedProduct.categoryId?.nombre || 'Sin categoria',
         marca: selectedProduct.marca || 'Genérico',
         rating: selectedProduct.rating
       };
       
       // Obtener carrito existente
       const existingCart = JSON.parse(localStorage.getItem('cart') || '[]');
-      const existingItemIndex = existingCart.findIndex((item: CartItem) => item.id === selectedProduct.id);
-      
+      const existingItemIndex = existingCart.findIndex((item: CartItem) => item._id === selectedProduct._id);
+
       if (existingItemIndex >= 0) {
         // Si el producto ya existe, actualizar cantidad
         const newQuantity = existingCart[existingItemIndex].quantity + quantity;
@@ -497,7 +507,7 @@ const Products = () => {
               {currentProducts.map(product => (
                 viewMode === "grid" ? (
                   <ProductCard 
-                    key={product.id} 
+                    key={product._id} 
                     product={product} 
                     onOpenModal={openModal}
                     formatPrice={formatPrice}
@@ -505,7 +515,7 @@ const Products = () => {
                   />
                 ) : (
                   <ProductListItem 
-                    key={product.id} 
+                    key={product._id} 
                     product={product} 
                     onOpenModal={openModal}
                     formatPrice={formatPrice}
@@ -608,7 +618,7 @@ const Products = () => {
                         {selectedProduct.nombre}
                       </h4>
                       <p className="text-sm text-gray-600 mb-2">
-                        {selectedProduct.category}
+                        {selectedProduct.categoryId ? selectedProduct.categoryId.nombre : 'Categoría desconocida'}
                         {selectedProduct.marca && (
                           <span className="ml-2 text-green-600">• {selectedProduct.marca}</span>
                         )}

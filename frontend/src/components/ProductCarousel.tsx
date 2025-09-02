@@ -4,12 +4,20 @@ import { Link } from 'react-router-dom';
 import API_URL from "../config/api.config";
 
 // Tipos de datos
+interface Category {
+  _id: string;
+  nombre: string;
+  slug: string;
+  url: string;
+}
+
 interface Product {
-  id: number;
+  _id: string;
+  id: string;
   nombre: string;
   precio: number;
   images: string[];
-  category: string;
+  categoryId: Category;
   descripcion?: string;
   stock?: number;
   marca?: string;
@@ -46,35 +54,38 @@ const ProductCarousel = () => {
     };
   }, []);
 
-  // Obtener productos del backend y ordenar por rating
-  useEffect(() => {
-    const fetchProducts = async () => {
-      setLoading(true);
-      try {
-        const response = await fetch(`${API_URL}/products`);
-        const data = await response.json();
-        
-        // Filtrar productos con rating y ordenar por rating descendente
-        const productsWithRating = data.filter((product: Product) => product.rating);
-        const sortedProducts = productsWithRating.sort((a: Product, b: Product) => {
-          // Asegurarse de que ambos productos tienen rating
-          const ratingA = a.rating || 0;
-          const ratingB = b.rating || 0;
-          return ratingB - ratingA; // Orden descendente
-        });
-        
-        // Tomar los primeros 8 productos con mejor rating
-        setProducts(sortedProducts.slice(0, 10));
-      } catch (error) {
-        console.error('Error fetching products:', error);
-        
-      } finally {
-        setLoading(false);
-      }
-    };
+// Obtener productos del backend y ordenar por rating
+useEffect(() => {
+  const fetchProducts = async () => {
+    setLoading(true);
+    try {
+      const response = await fetch(`${API_URL}/products`);
+      const data = await response.json();
+      
+      // La respuesta ahora tiene estructura { products: [], pagination: {} }
+      const productsData = data.products || data;
+      
+      // Filtrar productos con rating y ordenar por rating descendente
+      const productsWithRating = productsData.filter((product: Product) => product.rating);
+      const sortedProducts = productsWithRating.sort((a: Product, b: Product) => {
+        // Asegurarse de que ambos productos tienen rating
+        const ratingA = a.rating || 0;
+        const ratingB = b.rating || 0;
+        return ratingB - ratingA; // Orden descendente
+      });
+      
+      // Tomar los primeros 10 productos con mejor rating
+      setProducts(sortedProducts.slice(0, 10));
+    } catch (error) {
+      console.error('Error fetching products:', error);
+      
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    fetchProducts();
-  }, []);
+  fetchProducts();
+}, []);
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('es-CO', {
@@ -188,7 +199,7 @@ const ProductCarousel = () => {
                   className="px-2 sm:px-3"
                   style={{ width: `${100 / itemsPerView}%` }}
                 >
-                  <Link to={`/products/${product.id}`}>
+                  <Link to={`/products/${product._id}`}>
                     <div className="bg-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 group overflow-hidden border border-gray-100 cursor-pointer h-full flex flex-col">
                       <div className="relative overflow-hidden flex-grow">
                         <img
@@ -201,7 +212,7 @@ const ProductCarousel = () => {
                         {/* Badge de categoría */}
                         <div className="absolute top-2 left-2">
                           <span className="bg-green-600 text-white px-2 py-1 rounded-full text-xs font-medium">
-                            {product.category}
+                            {product.categoryId?.nombre || 'Sin categoría'}
                           </span>
                         </div>
 

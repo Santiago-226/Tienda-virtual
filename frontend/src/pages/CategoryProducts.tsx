@@ -6,14 +6,16 @@ import API_URL from '../config/api.config';
 
 // Tipos de datos
 interface Category {
-  id: number;
+  _id: string;
   nombre: string;
+  slug: string;
   image: string;
   descripcion?: string;
 }
 
 interface Product {
-  id: number;
+  _id: string;
+  id: string;
   nombre: string;
   precio: number;
   images: string[];
@@ -26,7 +28,8 @@ interface Product {
 }
 
 interface CartItem {
-  id: number;
+  _id: string;
+  id: string;
   nombre: string;
   precio: number;
   precioOriginal?: number;
@@ -165,37 +168,66 @@ const CategoryProducts = () => {
     }).format(price);
   }, []);
 
-  // Fetch de productos de la categoría
+  // Fetch de información de la categoría y productos
   useEffect(() => {
-    const fetchCategoryProducts = async () => {
+    const fetchCategoryData = async () => {
       if (!id) return;
       
       setLoading(true);
       setError(null);
       
       try {
-        const response = await fetch(`${API_URL}/categories/${id}/products`);
+        console.log('Fetching category data for ID:', id);
         
-        if (!response.ok) {
-          if (response.status === 404) {
+        // Primero, obtener información detallada de la categoría
+        const categoryResponse = await fetch(`${API_URL}/categories/${id}`);
+        console.log('Category response status:', categoryResponse.status);
+        
+        if (!categoryResponse.ok) {
+          if (categoryResponse.status === 404) {
             throw new Error('Categoría no encontrada');
           }
-          throw new Error(`Error ${response.status}: ${response.statusText}`);
+          throw new Error(`Error ${categoryResponse.status}: ${response.statusText}`);
         }
         
-        const data: CategoryProductsResponse = await response.json();
-        setCategory(data.category);
-        setProducts(data.products);
-        setFilteredProducts(data.products);
+        const categoryData = await categoryResponse.json();
+        console.log('Category data:', categoryData);
+        setCategory(categoryData);
+        
+        // Luego, obtener los productos de la categoría
+        const productsResponse = await fetch(`${API_URL}/products/category/${id}`);
+        console.log('Products response status:', productsResponse.status);
+        
+        if (!productsResponse.ok) {
+          throw new Error(`Error ${productsResponse.status}: ${productsResponse.statusText}`);
+        }
+        
+        const productsData = await productsResponse.json();
+        console.log('Products data:', productsData);
+        
+        // Verificamos la estructura de la respuesta
+        let productsArray = productsData;
+        
+        // Si la respuesta tiene una propiedad products (como en CategoryProductsResponse)
+        if (productsData.products && Array.isArray(productsData.products)) {
+          productsArray = productsData.products;
+        }
+        // Si la respuesta tiene una propiedad data (común en algunas APIs)
+        else if (productsData.data && Array.isArray(productsData.data)) {
+          productsArray = productsData.data;
+        }
+        
+        setProducts(productsArray);
+        setFilteredProducts(productsArray);
       } catch (error) {
-        console.error('Error fetching category products:', error);
-        setError(error instanceof Error ? error.message : 'Error al cargar los productos');
+        console.error('Error fetching category data:', error);
+        setError(error instanceof Error ? error.message : 'Error al cargar los datos de la categoría');
       } finally {
         setLoading(false);
       }
     };
 
-    fetchCategoryProducts();
+    fetchCategoryData();
   }, [id]);
 
   // Filtrar y ordenar productos
@@ -271,6 +303,7 @@ const CategoryProducts = () => {
     
     try {
       const cartItem: CartItem = {
+        _id: selectedProduct._id,
         id: selectedProduct.id,
         nombre: selectedProduct.nombre,
         precio: selectedProduct.precio,

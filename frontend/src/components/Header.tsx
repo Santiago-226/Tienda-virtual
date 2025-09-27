@@ -94,7 +94,7 @@ const Header = () => {
 
   return (
     <header className="bg-gradient-to-r from-green-800 via-green-700 to-green-600 shadow-lg fixed w-full top-0 z-50 border-b border-green-700">
-      <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <nav className="max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center py-3">
           {/* Logo empresarial - A la izquierda */}
           <div className="flex items-center space-x-2 sm:space-x-3 flex-shrink-0">

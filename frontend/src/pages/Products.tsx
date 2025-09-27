@@ -71,7 +71,8 @@ const Products: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [selectedBrand, setSelectedBrand] = useState<string>('all');
-  const [priceRange, setPriceRange] = useState<[number, number]>([0, 100000]);
+  const [minPrice, setMinPrice] = useState<number>(0);
+  const [maxPrice, setMaxPrice] = useState<number>(100000);
   const [minRating, setMinRating] = useState<number>(0);
   const [inStockOnly, setInStockOnly] = useState<boolean>(false);
   const [sortBy, setSortBy] = useState<SortOption>('newest');
@@ -127,9 +128,16 @@ const Products: React.FC = () => {
     return uniqueBrands;
   }, [products]);
 
-  const maxPrice = useMemo(() => {
+  const maxProductPrice = useMemo(() => {
     return Math.max(...products.map(p => p.precio), 0);
   }, [products]);
+
+  // Actualizar maxPrice cuando se cargan los productos
+  useEffect(() => {
+    if (maxProductPrice > 0) {
+      setMaxPrice(maxProductPrice);
+    }
+  }, [maxProductPrice]);
 
   // Filtrar y ordenar productos
   const filteredAndSortedProducts = useMemo(() => {
@@ -138,7 +146,7 @@ const Products: React.FC = () => {
                            product.descripcion.toLowerCase().includes(searchTerm.toLowerCase());
       const matchesCategory = selectedCategory === 'all' || product.categoryId.nombre === selectedCategory;
       const matchesBrand = selectedBrand === 'all' || product.marca === selectedBrand;
-      const matchesPrice = product.precio >= priceRange[0] && product.precio <= priceRange[1];
+      const matchesPrice = product.precio >= minPrice && product.precio <= maxPrice;
       const matchesRating = product.rating >= minRating;
       const matchesStock = !inStockOnly || product.inStock;
 
@@ -172,7 +180,7 @@ const Products: React.FC = () => {
     });
 
     return filtered;
-  }, [products, searchTerm, selectedCategory, selectedBrand, priceRange, minRating, inStockOnly, sortBy]);
+  }, [products, searchTerm, selectedCategory, selectedBrand, minPrice, maxPrice, minRating, inStockOnly, sortBy]);
 
   // Paginación
   const totalPages = Math.ceil(filteredAndSortedProducts.length / itemsPerPage);
@@ -190,12 +198,31 @@ const Products: React.FC = () => {
     setSearchTerm('');
     setSelectedCategory('all');
     setSelectedBrand('all');
-    setPriceRange([0, maxPrice]);
+    setMinPrice(0);
+    setMaxPrice(maxProductPrice);
     setMinRating(0);
     setInStockOnly(false);
     setSortBy('newest');
     setCurrentPage(1);
   };
+
+  // Manejar cambios en los inputs de precio
+  const handleMinPriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = parseInt(e.target.value) || 0;
+    setMinPrice(Math.max(0, value));
+  };
+
+  const handleMaxPriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = parseInt(e.target.value) || 0;
+    setMaxPrice(Math.min(maxProductPrice, value));
+  };
+
+  // Validar que minPrice no sea mayor que maxPrice
+  useEffect(() => {
+    if (minPrice > maxPrice) {
+      setMinPrice(maxPrice);
+    }
+  }, [minPrice, maxPrice]);
 
   const openProductModal = (product: Product, e: React.MouseEvent) => {
     e.preventDefault();
@@ -610,6 +637,8 @@ const Products: React.FC = () => {
               Filtros
               {(selectedCategory !== "all" ||
                 selectedBrand !== "all" ||
+                minPrice > 0 ||
+                maxPrice < maxProductPrice ||
                 minRating > 0 ||
                 inStockOnly ||
                 sortBy !== "newest") && (
@@ -713,24 +742,43 @@ const Products: React.FC = () => {
                   </select>
                 </div>
 
-                {/* Rango de precio */}
+                {/* Rango de precio con inputs */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Precio máximo: ${priceRange[1].toLocaleString()}
+                    Rango de Precio
                   </label>
-                  <input
-                    type="range"
-                    min={0}
-                    max={maxPrice}
-                    value={priceRange[1]}
-                    onChange={(e) =>
-                      setPriceRange([0, parseInt(e.target.value)])
-                    }
-                    className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
-                  />
-                  <div className="flex justify-between text-xs text-gray-500 mt-1">
-                    <span>$0</span>
-                    <span>${maxPrice.toLocaleString()}</span>
+                  <div className="space-y-3">
+                    <div>
+                      <label className="block text-xs text-gray-500 mb-1">Precio Mínimo</label>
+                      <div className="relative">
+                        <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">$</span>
+                        <input
+                          type="number"
+                          value={minPrice}
+                          onChange={handleMinPriceChange}
+                          min="0"
+                          max={maxProductPrice}
+                          className="w-full pl-8 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                          placeholder="0"
+                        />
+                      </div>
+                    </div>
+                    
+                    <div>
+                      <label className="block text-xs text-gray-500 mb-1">Precio Máximo</label>
+                      <div className="relative">
+                        <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">$</span>
+                        <input
+                          type="number"
+                          value={maxPrice}
+                          onChange={handleMaxPriceChange}
+                          min="0"
+                          max={maxProductPrice}
+                          className="w-full pl-8 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                          placeholder={maxProductPrice.toString()}
+                        />
+                      </div>
+                    </div>
                   </div>
                 </div>
 
@@ -844,6 +892,8 @@ const Products: React.FC = () => {
                   {(searchTerm ||
                     selectedCategory !== "all" ||
                     selectedBrand !== "all" ||
+                    minPrice > 0 ||
+                    maxPrice < maxProductPrice ||
                     minRating > 0 ||
                     inStockOnly ||
                     sortBy !== "newest") && (

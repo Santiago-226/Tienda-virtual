@@ -11,7 +11,11 @@ interface Category {
   image: string;
   descripcion?: string;
   productCount?: number;
+  createdAt?: string;
+  updatedAt?: string;
 }
+
+type SortOption = 'name-asc' | 'name-desc' | 'products-asc' | 'products-desc' | 'newest' | 'oldest' | 'updated';
 
 const Categories = () => {
   const [categories, setCategories] = useState<Category[]>([]);
@@ -19,7 +23,7 @@ const Categories = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-  const [sortBy, setSortBy] = useState('name');
+  const [sortBy, setSortBy] = useState<SortOption>('name-asc');
   const [showFilters, setShowFilters] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(12);
@@ -53,10 +57,20 @@ const Categories = () => {
     // Ordenar
     filtered.sort((a, b) => {
       switch (sortBy) {
-        case 'name':
+        case 'name-asc':
           return a.nombre.localeCompare(b.nombre);
-        case 'products':
+        case 'name-desc':
+          return b.nombre.localeCompare(a.nombre);
+        case 'products-asc':
+          return (a.productCount || 0) - (b.productCount || 0);
+        case 'products-desc':
           return (b.productCount || 0) - (a.productCount || 0);
+        case 'newest':
+          return new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime();
+        case 'oldest':
+          return new Date(a.createdAt || 0).getTime() - new Date(b.createdAt || 0).getTime();
+        case 'updated':
+          return new Date(b.updatedAt || 0).getTime() - new Date(a.updatedAt || 0).getTime();
         default:
           return 0;
       }
@@ -88,6 +102,20 @@ const Categories = () => {
 
   const goToNextPage = () => {
     setCurrentPage(prev => Math.min(prev + 1, totalPages));
+  };
+
+  // Función para obtener el texto descriptivo del ordenamiento
+  const getSortLabel = (option: SortOption): string => {
+    switch (option) {
+      case 'name-asc': return 'Nombre A-Z';
+      case 'name-desc': return 'Nombre Z-A';
+      case 'products-asc': return 'Menos productos';
+      case 'products-desc': return 'Más productos';
+      case 'newest': return 'Más recientes';
+      case 'oldest': return 'Más antiguas';
+      case 'updated': return 'Recientemente actualizadas';
+      default: return 'Nombre A-Z';
+    }
   };
 
   if (loading) {
@@ -151,13 +179,18 @@ const Categories = () => {
               <div className="relative">
                 <select
                   value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value)}
-                  className="appearance-none bg-white border border-gray-300 rounded-lg px-4 py-2 pr-8 focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  onChange={(e) => setSortBy(e.target.value as SortOption)}
+                  className="appearance-none bg-white border border-gray-300 rounded-lg px-4 py-2 pr-10 focus:ring-2 focus:ring-green-500 focus:border-transparent min-w-[200px]"
                 >
-                  <option value="name">Ordenar por nombre</option>
-                  <option value="products">Ordenar por productos</option>
+                  <option value="name-asc">Nombre A-Z</option>
+                  <option value="name-desc">Nombre Z-A</option>
+                  <option value="products-desc">Más productos primero</option>
+                  <option value="products-asc">Menos productos primero</option>
+                  <option value="newest">Más recientes</option>
+                  <option value="oldest">Más antiguas</option>
+                  <option value="updated">Recientemente actualizadas</option>
                 </select>
-                <ChevronDown className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4 pointer-events-none" />
+                <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4 pointer-events-none" />
               </div>
 
               {/* Vista */}
@@ -184,6 +217,19 @@ const Categories = () => {
                 </button>
               </div>
             </div>
+          </div>
+
+          {/* Indicador de ordenamiento actual */}
+          <div className="mt-3 flex items-center justify-between text-sm text-gray-600">
+            <span>
+              Mostrando {filteredCategories.length} categoría{filteredCategories.length !== 1 ? 's' : ''}
+              {searchTerm && (
+                <span> para "<strong>{searchTerm}</strong>"</span>
+              )}
+            </span>
+            <span className="bg-green-50 text-green-700 px-2 py-1 rounded-full text-xs">
+              Ordenado por: {getSortLabel(sortBy)}
+            </span>
           </div>
         </div>
 
@@ -217,8 +263,8 @@ const Categories = () => {
                     to={`/categories/${category.slug}`}
                     className="group"
                   >
-                    <div className="bg-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100 h-full">
-                      <div className="relative overflow-hidden">
+                    <div className="bg-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100 h-full flex flex-col">
+                      <div className="relative overflow-hidden flex-1">
                         <img
                           src={category.image}
                           alt={category.nombre}
@@ -231,6 +277,11 @@ const Categories = () => {
                             <h3 className="text-lg font-bold text-white mb-1 group-hover:text-green-300 transition-colors">
                               {category.nombre}
                             </h3>
+                            {category.productCount !== undefined && (
+                              <div className="flex items-center justify-center space-x-2 text-white/90 text-sm">
+                                <span>{category.productCount} producto{category.productCount !== 1 ? 's' : ''}</span>
+                              </div>
+                            )}
                           </div>
                         </div>
 
@@ -241,13 +292,21 @@ const Categories = () => {
                         </div>
                       </div>
 
-                      {category.descripcion && (
-                        <div className="p-4">
-                          <p className="text-gray-600 text-sm line-clamp-2">
+                      <div className="p-4">
+                        {category.descripcion && (
+                          <p className="text-gray-600 text-sm line-clamp-2 mb-2">
                             {category.descripcion}
                           </p>
+                        )}
+                        <div className="flex justify-between items-center text-xs text-gray-500">
+                          {category.productCount !== undefined && (
+                            <span className="bg-green-50 text-green-700 px-2 py-1 rounded-full">
+                              {category.productCount} producto{category.productCount !== 1 ? 's' : ''}
+                            </span>
+                          )}
+                          <span className="text-green-600 font-medium">Explorar →</span>
                         </div>
-                      )}
+                      </div>
                     </div>
                   </Link>
                 ))}
@@ -259,8 +318,8 @@ const Categories = () => {
               <div className="space-y-4">
                 {currentItems.map((category) => (
                   <Link 
-                    key={category.nombre}
-                    to={`/categories/${category.nombre}`}
+                    key={category._id}
+                    to={`/categories/${category.slug}`}
                     className="group"
                   >
                     <div className="bg-white rounded-lg shadow-sm hover:shadow-md transition-all duration-300 border border-gray-200 overflow-hidden">
@@ -273,20 +332,30 @@ const Categories = () => {
                           />
                         </div>
                         <div className="flex-1 p-4 sm:p-6 flex items-center justify-between">
-                          <div>
-                            <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-2 group-hover:text-green-600 transition-colors">
-                              {category.nombre}
-                            </h3>
+                          <div className="flex-1">
+                            <div className="flex items-center gap-3 mb-2">
+                              <h3 className="text-lg sm:text-xl font-bold text-gray-900 group-hover:text-green-600 transition-colors">
+                                {category.nombre}
+                              </h3>
+                              {category.productCount !== undefined && (
+                                <span className="bg-green-50 text-green-700 px-2 py-1 rounded-full text-sm font-medium">
+                                  {category.productCount} producto{category.productCount !== 1 ? 's' : ''}
+                                </span>
+                              )}
+                            </div>
                             {category.descripcion && (
                               <p className="text-gray-600 mb-2 line-clamp-2">
                                 {category.descripcion}
                               </p>
                             )}
-                            {category.productCount && (
-                              <p className="text-sm text-gray-500">
-                                {category.productCount} productos disponibles
-                              </p>
-                            )}
+                            <div className="flex items-center gap-4 text-sm text-gray-500">
+                              {category.createdAt && (
+                                <span>Creada: {new Date(category.createdAt).toLocaleDateString()}</span>
+                              )}
+                              {category.updatedAt && category.updatedAt !== category.createdAt && (
+                                <span>Actualizada: {new Date(category.updatedAt).toLocaleDateString()}</span>
+                              )}
+                            </div>
                           </div>
                           <div className="hidden sm:block">
                             <div className="bg-green-100 text-green-600 px-3 py-1 rounded-full text-sm font-medium group-hover:bg-green-600 group-hover:text-white transition-colors">
@@ -301,40 +370,104 @@ const Categories = () => {
               </div>
             )}
 
+            {/* Información de paginación */}
+            <div className="mt-6 flex justify-between items-center text-sm text-gray-600">
+              <span className="bg-gray-100 px-2 py-1 rounded-full">
+                Página {currentPage} de {totalPages}
+              </span>
+            </div>
+
             {/* Paginación */}
             {totalPages > 1 && (
-              <div className="mt-8 flex justify-center">
+              <div className="mt-4 flex justify-center">
                 <nav className="flex items-center space-x-2">
                   <button
-                    onClick={() => paginate(currentPage - 1)}
+                    onClick={goToPreviousPage}
                     disabled={currentPage === 1}
-                    className="p-2 rounded-lg border border-gray-300 text-gray-600 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    className="p-2 rounded-lg border border-gray-300 text-gray-600 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center"
                     title="Página anterior"
                   >
-                    <ChevronLeft className="h-5 w-5" />
+                    <ChevronLeft className="h-5 w-5 mr-1" />
+                    Anterior
                   </button>
 
-                  {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
-                    <button
-                      key={page}
-                      onClick={() => paginate(page)}
-                      className={`w-10 h-10 rounded-lg border transition-colors ${
-                        currentPage === page
-                          ? "bg-green-600 text-white border-green-600"
-                          : "border-gray-300 text-gray-600 hover:bg-gray-100"
-                      }`}
-                    >
-                      {page}
-                    </button>
-                  ))}
+                  {/* Números de página */}
+                  {(() => {
+                    const pages = [];
+                    const maxVisiblePages = 5;
+                    
+                    let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+                    let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+                    
+                    // Ajustar si estamos cerca del final
+                    if (endPage - startPage + 1 < maxVisiblePages) {
+                      startPage = Math.max(1, endPage - maxVisiblePages + 1);
+                    }
+
+                    // Primera página y elipsis
+                    if (startPage > 1) {
+                      pages.push(
+                        <button
+                          key={1}
+                          onClick={() => paginate(1)}
+                          className="w-10 h-10 rounded-lg border border-gray-300 text-gray-600 hover:bg-gray-100 transition-colors"
+                        >
+                          1
+                        </button>
+                      );
+                      if (startPage > 2) {
+                        pages.push(
+                          <span key="ellipsis1" className="px-2 text-gray-400">...</span>
+                        );
+                      }
+                    }
+
+                    // Páginas visibles
+                    for (let i = startPage; i <= endPage; i++) {
+                      pages.push(
+                        <button
+                          key={i}
+                          onClick={() => paginate(i)}
+                          className={`w-10 h-10 rounded-lg border transition-colors ${
+                            currentPage === i
+                              ? "bg-green-600 text-white border-green-600"
+                              : "border-gray-300 text-gray-600 hover:bg-gray-100"
+                          }`}
+                        >
+                          {i}
+                        </button>
+                      );
+                    }
+
+                    // Última página y elipsis
+                    if (endPage < totalPages) {
+                      if (endPage < totalPages - 1) {
+                        pages.push(
+                          <span key="ellipsis2" className="px-2 text-gray-400">...</span>
+                        );
+                      }
+                      pages.push(
+                        <button
+                          key={totalPages}
+                          onClick={() => paginate(totalPages)}
+                          className="w-10 h-10 rounded-lg border border-gray-300 text-gray-600 hover:bg-gray-100 transition-colors"
+                        >
+                          {totalPages}
+                        </button>
+                      );
+                    }
+
+                    return pages;
+                  })()}
 
                   <button
-                    onClick={() => paginate(currentPage + 1)}
+                    onClick={goToNextPage}
                     disabled={currentPage === totalPages}
-                    className="p-2 rounded-lg border border-gray-300 text-gray-600 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    className="p-2 rounded-lg border border-gray-300 text-gray-600 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center"
                     title="Página siguiente"
                   >
-                    <ChevronRight className="h-5 w-5" />
+                    Siguiente
+                    <ChevronRight className="h-5 w-5 ml-1" />
                   </button>
                 </nav>
               </div>

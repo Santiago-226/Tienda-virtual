@@ -1,6 +1,7 @@
 require('dotenv').config();
 const mongoose = require('mongoose');
 const { fakerES: faker } = require('@faker-js/faker');
+const bcrypt = require('bcryptjs');
 
 const MONGODB_URI = process.env.MONGODB_URI;
 
@@ -33,7 +34,7 @@ const generateSKU = (prefix) => {
   return `${prefix}-${faker.string.alphanumeric(6).toUpperCase()}`;
 };
 
-//Generar slug
+// Generar slug
 const slugify = (text) => 
   text.toLowerCase()
     .replace(/[^a-z0-9\s-]/g, '')
@@ -41,6 +42,11 @@ const slugify = (text) =>
     .replace(/-+/g, '-')
     .replace(/^-+|-+$/g, ''); // limpia guiones al inicio/fin
 
+// Función para encriptar password (similar a la del modelo)
+const encryptPassword = async (password) => {
+  const salt = await bcrypt.genSalt(12);
+  return await bcrypt.hash(password, salt);
+};
 
 // Función principal
 const seedDatabase = async () => {
@@ -56,13 +62,74 @@ const seedDatabase = async () => {
     console.log('🧹 Limpiando colecciones...');
     await mongoose.connection.db.collection('products').deleteMany({});
     await mongoose.connection.db.collection('categories').deleteMany({});
+    await mongoose.connection.db.collection('users').deleteMany({});
     console.log('✅ Colecciones limpiadas');
 
     // Importar modelos
     const Product = require('./models/Product');
     const Category = require('./models/Category');
+    const User = require('./models/User');
 
-    // Crear categorías con URLs válidas
+    // ===== CREAR USUARIOS =====
+    console.log('👤 Creando usuarios...');
+    
+    // Usuario administrador
+    const adminUser = new User({
+      name: 'Santiago Admin',
+      email: 'santiago@gmail.com',
+      password: 'admin123', // Se encriptará automáticamente por el modelo
+      phone: '3001234567',
+      role: 'admin',
+      address: {
+        street: 'Calle 123 # 45-67',
+        city: 'Bogotá',
+        state: 'Cundinamarca',
+        zipCode: '110011',
+        country: 'Colombia'
+      },
+      avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80',
+      preferences: {
+        newsletter: true,
+        notifications: true,
+        language: 'es'
+      },
+      emailVerified: true,
+      lastLogin: new Date()
+    });
+
+    // Usuario cliente de ejemplo
+    const customerUser = new User({
+      name: 'María García',
+      email: 'maria.garcia@example.com',
+      password: 'cliente123',
+      phone: '3109876543',
+      role: 'customer',
+      address: {
+        street: 'Carrera 56 # 78-90',
+        city: 'Medellín',
+        state: 'Antioquia',
+        zipCode: '050001',
+        country: 'Colombia'
+      },
+      avatar: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80',
+      preferences: {
+        newsletter: true,
+        notifications: false,
+        language: 'es'
+      },
+      emailVerified: true
+    });
+
+    // Guardar usuarios
+    const savedAdmin = await adminUser.save();
+    const savedCustomer = await customerUser.save();
+    console.log('✅ Usuarios creados:');
+    console.log(`   - Admin: ${savedAdmin.email} (contraseña: admin123)`);
+    console.log(`   - Cliente: ${savedCustomer.email} (contraseña: cliente123)`);
+
+    // ===== CREAR CATEGORÍAS =====
+    console.log('📂 Creando categorías...');
+    
     const categoriesData = [
       {
         nombre: 'Semillas',
@@ -73,13 +140,13 @@ const seedDatabase = async () => {
       {
         nombre: 'Fertilizantes',
         descripcion: 'Abonos y fertilizantes orgánicos y químicos para mejorar el crecimiento de tus cultivos',
-        image: 'https://www.suministrosagricolasluque.com/wp-content/uploads/2018/05/C%C3%B3mo-utilizar-correctamente-el-fertilizante-adecuado.jpg', // URL simplificada
+        image: 'https://www.suministrosagricolasluque.com/wp-content/uploads/2018/05/C%C3%B3mo-utilizar-correctamente-el-fertilizante-adecuado.jpg',
         slug: slugify('Fertilizantes')
       },
       {
         nombre: 'Herramientas Agrícolas',
         descripcion: 'Herramientas especializadas para el trabajo en el campo y cultivos',
-        image: 'https://ageusa.com/wp-content/uploads/2022/08/4-2.jpg', // URL simplificada
+        image: 'https://ageusa.com/wp-content/uploads/2022/08/4-2.jpg',
         slug: slugify('Herramientas Agrícolas')
       }
     ];
@@ -87,16 +154,19 @@ const seedDatabase = async () => {
     const categories = await Category.insertMany(categoriesData);
     console.log('✅ Categorías creadas:', categories.length);
 
-    // Crear productos con URLs válidas
+    // ===== CREAR PRODUCTOS =====
+    console.log('🛍️ Creando productos...');
+    
     const productsData = [
       // Semilla 1
       {
         nombre: 'Semilla de Maíz Híbrido Premium',
         descripcion: 'Semilla de maíz de alto rendimiento, resistente a plagas y adaptable a diversos climas.',
-        precio: 45.99,
-        precioOriginal: 52.50,
-        images: ['https://www.agrosavia.co/media/tcag3xcj/jos%C3%A9-jaime-tapia-6.jpg',
-            'https://blog.cambiagro.com/wp-content/uploads/2024/05/tipos-de-semilla-de-maiz.jpg'
+        precio: 45000,
+        precioOriginal: 52500,
+        images: [
+          'https://www.agrosavia.co/media/tcag3xcj/jos%C3%A9-jaime-tapia-6.jpg',
+          'https://blog.cambiagro.com/wp-content/uploads/2024/05/tipos-de-semilla-de-maiz.jpg'
         ],
         categoryId: categories[0]._id,
         caracteristicas: ['Alto rendimiento', 'Resistente a sequías', 'Ciclo de 90-100 días'],
@@ -111,16 +181,18 @@ const seedDatabase = async () => {
         garantia: 'Garantía de germinación',
         incluye: ['Bolsa de semillas', 'Guía de cultivo'],
         salesCount: 45,
-        slug: slugify('Semilla de Maíz Híbrido Premium')
+        slug: slugify('Semilla de Maíz Híbrido Premium'),
+        createdBy: savedAdmin._id // Asignar el usuario admin como creador
       },
       // Semilla 2
       {
         nombre: 'Semilla de Tomate Cherry Orgánico',
         descripcion: 'Semillas de tomate cherry orgánico certificado, ideal para huertos familiares.',
-        precio: 8.50,
-        precioOriginal: 10.00,
-        images: ['https://i.blogs.es/866293/tomates-cherry1/840_560.jpg',
-            'https://corp.ametllerorigen.com/wp-content/uploads/2022/04/9S2A3548.jpg'
+        precio: 8500,
+        precioOriginal: 10000,
+        images: [
+          'https://i.blogs.es/866293/tomates-cherry1/840_560.jpg',
+          'https://corp.ametllerorigen.com/wp-content/uploads/2022/04/9S2A3548.jpg'
         ],
         categoryId: categories[0]._id,
         caracteristicas: ['Certificación orgánica', 'Sabor dulce', 'Alta productividad'],
@@ -135,14 +207,15 @@ const seedDatabase = async () => {
         garantia: 'Germinación garantizada',
         incluye: ['Sobre de semillas', 'Instrucciones'],
         salesCount: 124,
-        slug: slugify('Semilla de Tomate Cherry Orgánico')
+        slug: slugify('Semilla de Tomate Cherry Orgánico'),
+        createdBy: savedAdmin._id
       },
       // Fertilizante 1
       {
         nombre: 'Fertilizante Orgánico NutriGrow',
         descripcion: 'Fertilizante 100% orgánico con nutrientes esenciales para el desarrollo de plantas.',
-        precio: 29.75,
-        precioOriginal: 35.00,
+        precio: 29500,
+        precioOriginal: 35000,
         images: ['https://www.suministrosagricolasluque.com/wp-content/uploads/2018/04/Ventajas-de-los-fertilizantes-org%C3%A1nicos.jpg'],
         categoryId: categories[1]._id,
         caracteristicas: ['100% orgánico', 'Mejora el suelo', 'Aumenta retención de agua'],
@@ -157,14 +230,15 @@ const seedDatabase = async () => {
         garantia: 'Resultados en 15 días',
         incluye: ['Bolsa', 'Medidor de pH', 'Guía'],
         salesCount: 92,
-        slug: slugify('Fertilizante Orgánico NutriGrow')
+        slug: slugify('Fertilizante Orgánico NutriGrow'),
+        createdBy: savedAdmin._id
       },
       // Fertilizante 2
       {
         nombre: 'Abono Foliar NutriQuick',
         descripcion: 'Abono foliar de rápida absorción con micronutrientes esenciales.',
-        precio: 42.25,
-        precioOriginal: 49.99,
+        precio: 4200,
+        precioOriginal: 4900,
         images: ['https://www.buscador.portaltecnoagricola.com/app/imagenes_aplicacion/portaltecnoagricola-lainco-ABONO-FOLIAR-N-5-L_.jpg'],
         categoryId: categories[1]._id,
         caracteristicas: ['Absorción rápida', 'Corrige deficiencias', 'Aumenta resistencia'],
@@ -179,14 +253,15 @@ const seedDatabase = async () => {
         garantia: 'Resultados en 7 días',
         incluye: ['Botella', 'Medidor', 'Guía'],
         salesCount: 78,
-        slug: slugify('Abono Foliar NutriQuick')
+        slug: slugify('Abono Foliar NutriQuick'),
+        createdBy: savedAdmin._id
       },
       // Herramienta 1
       {
         nombre: 'Tijeras de Podar Profesionales',
         descripcion: 'Tijeras de podar de alta resistencia con mangos ergonómicos y hoja de acero inoxidable.',
-        precio: 24.99,
-        precioOriginal: 0,
+        precio: 24000,
+        precioOriginal: 30000,
         images: ['https://disfecol.com.co/wp-content/uploads/2020/09/P126.1.png'],
         categoryId: categories[2]._id,
         caracteristicas: ['Acero inoxidable', 'Mangos ergonómicos', 'Corte preciso'],
@@ -201,14 +276,15 @@ const seedDatabase = async () => {
         garantia: '2 años',
         incluye: ['Tijeras', 'Funda', 'Guía'],
         salesCount: 67,
-        slug: slugify('Tijeras de Podar Profesionales')
+        slug: slugify('Tijeras de Podar Profesionales'),
+        createdBy: savedAdmin._id
       },
       // Herramienta 2
       {
         nombre: 'Carretilla Agrícola de Acero',
         descripcion: 'Carretilla robusta con estructura de acero y llanta neumática. Capacidad de 100 litros.',
-        precio: 89.99,
-        precioOriginal: 109.99,
+        precio: 89900,
+        precioOriginal: 109900,
         images: ['https://upload.wikimedia.org/wikipedia/commons/5/55/Brouette_chantier.JPG'],
         categoryId: categories[2]._id,
         caracteristicas: ['Estructura reforzada', 'Llanta neumática', 'Capacidad 100L'],
@@ -223,14 +299,15 @@ const seedDatabase = async () => {
         garantia: '5 años',
         incluye: ['Carretilla armada', 'Llave'],
         salesCount: 36,
-        slug: slugify('Carretilla Agrícola de Acero')
+        slug: slugify('Carretilla Agrícola de Acero'),
+        createdBy: savedAdmin._id
       }
     ];
 
     const products = await Product.insertMany(productsData);
     console.log('✅ Productos creados:', products.length);
 
-    // Actualizar contadores
+    // Actualizar contadores de categorías
     for (const category of categories) {
       const count = await Product.countDocuments({ categoryId: category._id });
       category.productCount = count;
@@ -239,8 +316,23 @@ const seedDatabase = async () => {
 
     console.log('\n🎉 ¡Base de datos poblada exitosamente!');
     console.log('📊 Resumen:');
+    console.log('- Usuarios: 2 (1 admin, 1 cliente)');
     console.log('- Categorías:', categories.length);
     console.log('- Productos:', products.length);
+    
+    // Mostrar credenciales importantes
+    console.log('\n🔐 CREDENCIALES DE ACCESO:');
+    console.log('═'.repeat(50));
+    console.log('👑 USUARIO ADMINISTRADOR:');
+    console.log('   Email: santiago@gmail.com');
+    console.log('   Contraseña: admin123');
+    console.log('   Rol: admin');
+    console.log('');
+    console.log('👤 USUARIO CLIENTE:');
+    console.log('   Email: maria.garcia@example.com');
+    console.log('   Contraseña: cliente123');
+    console.log('   Rol: customer');
+    console.log('═'.repeat(50));
     
     // Mostrar algunos productos
     console.log('\n🛍️  Algunos productos creados:');
